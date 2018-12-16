@@ -1,5 +1,5 @@
 class NarrativePiece:
-    def __init__(self, text, required_concepts, output_concept, input_to_output_params, linked_parameters=[], is_end=False):
+    def __init__(self, text, required_concepts, output_concept, input_to_output_params, linked_parameters=[]):
         self.text = text
         self.required_concepts = required_concepts
         self.output_concept = output_concept
@@ -8,7 +8,6 @@ class NarrativePiece:
         assert iter(linked_parameters)
         for link_set in linked_parameters:
             assert iter(link_set)
-        self.is_end = is_end
 
     def __str__(self):
         return self.text
@@ -68,7 +67,7 @@ isDead = Concept([charParam])
 isArrested = Concept([charParam])
 isArmed = Concept([charParam], "isArmed")
 
-clientHasClosure = Concept([])
+storyEnd = Concept([])
 
 def one_to_one_piece(text, req, output):
     input_to_output_params = dict(zip(req.parameters, output.parameters))
@@ -104,15 +103,29 @@ narrative_pieces = (
 
         one_to_one_piece("PI chases old boss.", runsAway, chasing),
 
+        NarrativePiece("Frog 1 is here and I'm going to get him..", [chasing], storyEnd, {}),
+
         NarrativePiece("Old boss gets cornered down an alley.", [chasing], cornered, {chasing.parameters[0]: cornered.parameters[0]}),
         NarrativePiece("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.",
             [cornered, isArmed], isDead, {isArmed.parameters[0]: isDead.parameters[0]},
             [link_firsts(cornered, isArmed)])
     ] +
     ([NarrativePiece("Client learns who kidnapped/killed father and thanks PI for closure",
-            [isPerp, perpResolved], clientHasClosure, {}, [link_firsts(isPerp, perpResolved)], is_end=True)
+            [isPerp, perpResolved], storyEnd, {}, [link_firsts(isPerp, perpResolved)])
         for perpResolved in [isDead, isArrested]
     ])
+)
+
+discreteToContinuous = Concept([], "discrete")
+knowPerpIsInChinatown = Concept([], "knowIsInChinatown")
+
+to_add_later = (
+    [
+        NarrativePiece("You should first describe my life by how I overcame a youthful obsession " +
+            "with discrete mathematics and found love with continuous values. Real beauty exists " +
+            "again within itself and does not stop at some arbitrary depth.", [], discreteToContinuous, {}),
+        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], storyEnd, {}),
+    ]
 )
 
 free_characters = frozenset(["Alan", "Sarah", "David", "Julie"])
