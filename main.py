@@ -1,5 +1,6 @@
 import itertools
 import story
+import noir
 
 def has_duplicates(iterable):
     return len(iterable) > len(set(iterable))
@@ -42,7 +43,7 @@ def is_established_by(concept, established_idea, bound_arguments):
     return True
 
 def tryBindAndUpdate(narrative_piece, established_ideas, ideas_that_have_lead_to_something):
-    if narrative_piece.output_concept is story.storyEnd:
+    if narrative_piece.output_concept is story.story_end:
         for idea in established_ideas:
             if not ideas_that_have_lead_to_something.get(idea, False):
                 # We can't end the story yet because not all ideas have lead to something
@@ -83,7 +84,7 @@ def tryBindAndUpdate(narrative_piece, established_ideas, ideas_that_have_lead_to
     output_args = None
 
     all_free_arg_combos_generator = (itertools.product(
-        *(story.free_arguments[param.p_type] for param in free_parameters))
+        *(noir.free_arguments[param.p_type] for param in free_parameters))
     )
 
     # This loop goes once if we have 0 free params
@@ -142,7 +143,7 @@ while stillTelling and count < 30:
     count = count + 1
     bound_arguments = None
     narrative_piece = None
-    for piece in story.narrative_pieces:
+    for piece in noir.narrative_pieces:
         arguments = tryBindAndUpdate(piece, established_ideas, ideas_that_have_lead_to_something)
         if arguments is not None:
             narrative_piece = piece
@@ -152,5 +153,5 @@ while stillTelling and count < 30:
         stillTelling = False
     else:
         print(narrative_piece, " - ", arguments)
-        if narrative_piece.output_concept is story.storyEnd:
+        if narrative_piece.output_concept is story.story_end:
             stillTelling = False

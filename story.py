@@ -1,8 +1,32 @@
+import collections
+
+# If we break the narrative down into small enough pieces, it becomes a language. We can recombine
+# the pieces to create novelty. Repeating the same building blocks does not sound repetative, just
+# like words.
+
 class NarrativePiece:
-    def __init__(self, text, required_concepts, output_concept, input_to_output_params, linked_parameters=[]):
+    def __init__(self, text, required_concepts, output_concept):
+
+        reqs_names_to_params = collections.defaultdict(list)
+
+        for concept in required_concepts:
+            for name, arg in concept.get_named_params():
+                reqs_names_to_params[name].append(arg)
+
+        linked_parameters = []
+
+        for args in reqs_names_to_params.values():
+            linked_parameters.append(args)
+
+        input_to_output_params = {}
+
+        for name, arg in output_concept.get_named_params():
+            for param in reqs_names_to_params[name]:
+                input_to_output_params[param] = arg
+
         self.text = text
-        self.required_concepts = required_concepts
-        self.output_concept = output_concept
+        self.required_concepts = [req.get_concept() for req in required_concepts]
+        self.output_concept = output_concept.get_concept()
         self.input_to_output_params = input_to_output_params
         self.linked_parameters = linked_parameters
         assert iter(linked_parameters)
@@ -29,106 +53,31 @@ class Concept:
             return super().__str__()
         return self.debug_name
 
-# Parm types
-charParam = 'char_param_type'
+    def __call__(self, *args):
+        return ConceptWithNamedArgs(self, args)
 
-characterHasDeadBrother = Concept([charParam], "deadBro")
-characterIsPI = Concept([charParam], "isPI")
+    def get_named_params(self):
+        return []
 
-# 1st parameter is the detective
-caseOfMissingFather = Concept([charParam], "missingFather")
+    def get_concept(self):
+        return self
 
-# 1st parameter is the detective, 2nd is mentor
-# The params are exclusive because you can't get advice from yourself.
-hasGuidance = Concept([charParam, charParam], "hasGuidance", is_exclusive=True)
+class ConceptWithNamedArgs:
+    def __init__(self, concept, args):
+        self.concept = concept
+        self.names_to_params = zip(args, concept.parameters)
 
-# 1st parameter is the detective
-inFathersAppartment = Concept([charParam], "inFathersAppartment")
-# 1st parameter is the detective
-foundDeadFather = Concept([charParam], "foundDeadFather")
-# 1st parameter is the detective, 2nd param is the perp
-foundEvidenceOfPerp = Concept([charParam, charParam], "foundEvidenceOfPerp")
-# 1st parameter is the detective, 2nd param is the perp
-isAtHouse = Concept([charParam, charParam], "isAtHouse")
-# 1st parameter is the perp
-runsAway = Concept([charParam], "runsAway")
-# 1st parameter is the perp
-chasing = Concept([charParam], "chasing")
-# 1st parameter is the perp, 2nd param is the detective
-cornered = Concept([charParam, charParam], "cornered")
-# 1st parameter is the detective
-selfDefenseKillPerp = Concept([charParam], "selfDefenseKillPerp")
-# 1st parameter is the detective
-closure = Concept([charParam], "closure")
+    def get_concept(self):
+        return self.concept
 
-isPerp = Concept([charParam])
-
-isDead = Concept([charParam])
-isArrested = Concept([charParam])
-isArmed = Concept([charParam], "isArmed")
-
-storyEnd = Concept([])
+    def get_named_params(self):
+        return self.names_to_params
 
 def one_to_one_piece(text, req, output):
-    input_to_output_params = dict(zip(req.parameters, output.parameters))
-    assert len(input_to_output_params) == 1
-    return NarrativePiece(text, [req], output, input_to_output_params)
+    assert len(req.parameters) == 1
+    assert len(output.parameters) == 1
+    return NarrativePiece(text, [req(1)], output(1))
 
-def link_firsts(concept1, concept2):
-    return (concept1, concept2)
+#TODO: can keep large sections under one concept (like prose style) as a nested constructor thing
 
-narrative_pieces = (
-    [
-        NarrativePiece("Introduce PI", [], characterIsPI, {}),
-        NarrativePiece("Introduce dead brother", [], characterHasDeadBrother, {}),
-        one_to_one_piece("Father missing case", characterIsPI, caseOfMissingFather),
-    ] +
-    ([NarrativePiece("Asks old boss for help", [hasACase], hasGuidance, {hasACase.parameters[0]: hasGuidance.parameters[0]})
-        for hasACase in [caseOfMissingFather]
-    ]) +
-    [
-        NarrativePiece("Secretly, the boss did it.", [hasGuidance], isPerp, {hasGuidance.parameters[1]: isPerp.parameters[0]}),
-        NarrativePiece("Breaks into father's appartment.", [hasGuidance], inFathersAppartment, {hasGuidance.parameters[0]: inFathersAppartment.parameters[0]}),
-        one_to_one_piece("Finds father dead.", inFathersAppartment, foundDeadFather),
-
-        NarrativePiece("Knows now that his old boss did it.", [foundDeadFather, hasGuidance],
-            foundEvidenceOfPerp, dict(zip(hasGuidance.parameters, foundEvidenceOfPerp.parameters)),
-            [link_firsts(foundDeadFather, hasGuidance)]),
-
-        NarrativePiece("Goes to his old bosses place.", [foundEvidenceOfPerp], isAtHouse,
-            dict(zip(foundEvidenceOfPerp.parameters, isAtHouse.parameters))),
-
-        NarrativePiece("Boss sees PI and bolts.", [isAtHouse, isPerp], runsAway,
-            {isPerp.parameters[0]: runsAway.parameters[0]}, [(isAtHouse.parameters[1], isPerp.parameters[0])]),
-
-        one_to_one_piece("PI chases old boss.", runsAway, chasing),
-
-        NarrativePiece("Frog 1 is here and I'm going to get him..", [chasing], storyEnd, {}),
-
-        NarrativePiece("Old boss gets cornered down an alley.", [chasing], cornered, {chasing.parameters[0]: cornered.parameters[0]}),
-        NarrativePiece("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.",
-            [cornered, isArmed], isDead, {isArmed.parameters[0]: isDead.parameters[0]},
-            [link_firsts(cornered, isArmed)])
-    ] +
-    ([NarrativePiece("Client learns who kidnapped/killed father and thanks PI for closure",
-            [isPerp, perpResolved], storyEnd, {}, [link_firsts(isPerp, perpResolved)])
-        for perpResolved in [isDead, isArrested]
-    ])
-)
-
-discreteToContinuous = Concept([], "discrete")
-knowPerpIsInChinatown = Concept([], "knowIsInChinatown")
-
-to_add_later = (
-    [
-        NarrativePiece("You should first describe my life by how I overcame a youthful obsession " +
-            "with discrete mathematics and found love with continuous values. Real beauty exists " +
-            "again within itself and does not stop at some arbitrary depth.", [], discreteToContinuous, {}),
-        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], storyEnd, {}),
-    ]
-)
-
-free_characters = frozenset(["Alan", "Sarah", "David", "Julie"])
-
-# TODO: add other non-character params to this map with their own argument sets
-free_arguments = {charParam:free_characters}
+story_end = Concept([])
