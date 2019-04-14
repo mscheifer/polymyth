@@ -32,6 +32,8 @@ selfDefenseKillPerp = Concept([charParam], "selfDefenseKillPerp")
 # 1st parameter is the detective
 closure = Concept([charParam], "closure")
 
+storyStart = Concept([])
+
 isProtag = Concept([charParam])
 isPerp = Concept([charParam])
 
@@ -46,50 +48,53 @@ regainFaith = Concept([charParam], "regainFaith")
 
 narrative_pieces = (
     [
-        NarrativePiece("Introduce PI", [], characterIsPI),
+        MakeBeat("Introduce PI")
+            .if_not(storyStart) # any
+            .sets_up(characterIsPI, storyStart),
         MakeBeat("PI is protagonist")
-            .needs([characterIsPI(1)])
-            .if_not([isProtag]) # any
+            .needs(characterIsPI(1))
+            .if_not(isProtag) # any
             .sets_up(isProtag(1)),
 
-        NarrativePiece("Introduce dead brother", [], characterHasDeadBrother),
-        one_to_one_piece("Father missing case", characterIsPI, caseOfMissingFather),
+        MakeBeat("Introduce dead brother").sets_up(characterHasDeadBrother),
+        MakeBeat("Father missing case").needs(characterIsPI).sets_up(caseOfMissingFather),
     ] +
     ([MakeBeat("Asks old boss for help")
-        .needs([hasACase(1)])
-        .if_not([isProtag(2)])
+        .needs(hasACase(1))
+        .if_not(isProtag(2))
         .sets_up(hasGuidance(1, 2))
 
         for hasACase in [caseOfMissingFather]
     ]) +
     [
-        NarrativePiece("Secretly, the boss did it.", [hasGuidance(0,1)], isPerp(1)),
-        NarrativePiece("Breaks into father's appartment.", [hasGuidance(1)], inFathersAppartment(1)),
-        one_to_one_piece("Finds father dead.", inFathersAppartment, foundDeadFather),
+        MakeBeat("Secretly, the boss did it.").needs(hasGuidance(0,1)).sets_up(isPerp(1)),
+        MakeBeat("Breaks into father's appartment.").needs(hasGuidance(1)).sets_up(inFathersAppartment(1)),
+        MakeBeat("Finds father dead.").needs(inFathersAppartment).sets_up(foundDeadFather),
 
         NarrativePiece("Knows now that his old boss did it.", [foundDeadFather(1), hasGuidance(1,2)],
-            foundEvidenceOfPerp(1,2)),
+            [foundEvidenceOfPerp(1,2)]),
 
-        NarrativePiece("Goes to his old bosses place.", [foundEvidenceOfPerp(1,2)], isAtHouse(1,2)),
+        NarrativePiece("Goes to his old bosses place.", [foundEvidenceOfPerp(1,2)], [isAtHouse(1,2)]),
 
-        NarrativePiece("Boss sees PI and bolts.", [isAtHouse(0,1), isPerp(1)], runsAway(1)),
+        NarrativePiece("Boss sees PI and bolts.", [isAtHouse(0,1), isPerp(1)], [runsAway(1)]),
 
-        NarrativePiece("PI chases old boss.", [runsAway(1)], chasing(1)),
+        MakeBeat("PI chases old boss.").needs(runsAway(1)).sets_up(chasing(1)),
 
         NarrativePiece("Frog 1 is here and I'm going to get him..", [chasing(1), isObsessive(1)],
-            story_end),
+            [story_end]),
 
-        NarrativePiece("Old boss gets cornered down an alley.", [chasing(1,2)], cornered(1,2)),
+        MakeBeat("Old boss gets cornered down an alley.").needs(chasing(1,2)).sets_up(cornered(1,2)),
         NarrativePiece("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.",
-            [cornered(1), isArmed(1)], isDead(1))
+            [cornered(1), isArmed(1)], [isDead(1)])
     ] +
-    ([NarrativePiece("Client learns who kidnapped/killed father and thanks PI for closure",
-            [isPerp(1), perpResolved(1)], story_end)
+    ([MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
+            .needs(isPerp(1), perpResolved(1))
+            .sets_up(story_end)
         for perpResolved in [isDead, isArrested]
     ] +
     [
-        NarrativePiece("Wife died randomly. Said something random.", [], wifeDiedRandomly),
-        NarrativePiece("Wife last words become meaningful.", [wifeDiedRandomly(1)], regainFaith(1)),
+        MakeBeat("Wife died randomly. Said something random.").sets_up(wifeDiedRandomly),
+        MakeBeat("Wife last words become meaningful.").needs(wifeDiedRandomly(1)).sets_up(regainFaith(1)),
     ])
 )
 
@@ -104,8 +109,8 @@ to_add_later = (
     [
         NarrativePiece("You should first describe my life by how I overcame a youthful obsession " +
             "with discrete mathematics and found love with continuous values. Real beauty exists " +
-            "again within itself and does not stop at some arbitrary depth.", [], discreteToContinuous),
-        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], story_end),
+            "again within itself and does not stop at some arbitrary depth.", [], [discreteToContinuous]),
+        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], [story_end]),
     ]
 )
 

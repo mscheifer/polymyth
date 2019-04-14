@@ -134,26 +134,27 @@ def tryBindAndUpdate(narrative_piece, established_ideas, ideas_that_have_lead_to
 
     return output_arguments
 
-established_ideas = []
-ideas_that_have_lead_to_something = {}
+if __name__ == '__main__':
+    established_ideas = []
+    ideas_that_have_lead_to_something = {}
 
-stillTelling = True
+    stillTelling = True
 
-count = 0
+    count = 0
 
-while stillTelling and count < 30:
-    count = count + 1
-    bound_arguments = None
-    narrative_piece = None
-    for piece in noir.narrative_pieces:
-        arguments = tryBindAndUpdate(piece, established_ideas, ideas_that_have_lead_to_something)
-        if arguments is not None:
-            narrative_piece = piece
-            break
-    if narrative_piece is None:
-        print("error no next narrative piece found")
-        stillTelling = False
-    else:
-        print(narrative_piece, " - ", arguments)
-        if narrative_piece.output_concept is story.story_end:
+    while stillTelling and count < 30:
+        count = count + 1
+        bound_arguments = None
+        narrative_piece = None
+        for piece in noir.narrative_pieces:
+            arguments = tryBindAndUpdate(piece, established_ideas, ideas_that_have_lead_to_something)
+            if arguments is not None:
+                narrative_piece = piece
+                break
+        if narrative_piece is None:
+            print("error no next narrative piece found")
             stillTelling = False
+        else:
+            print(narrative_piece, " - ", arguments)
+            if narrative_piece.output_concept is story.story_end:
+                stillTelling = False

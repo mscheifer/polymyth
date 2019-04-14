@@ -10,21 +10,21 @@ class MakeBeat:
         self.required_concepts = []
         self.prohibitive_concepts = []
 
-    def needs(self, required_concepts):
+    def needs(self, *required_concepts):
         self.required_concepts = required_concepts
         return self
 
-    def if_not(self, prohibitive_concepts):
+    def if_not(self, *prohibitive_concepts):
         self.prohibitive_concepts = prohibitive_concepts
         return self
 
-    def sets_up(self, output_concept):
+    def sets_up(self, *output_concepts):
         return NarrativePiece(
-            self.text, self.required_concepts, output_concept, self.prohibitive_concepts
+            self.text, self.required_concepts, output_concepts, self.prohibitive_concepts
         )
 
 class NarrativePiece:
-    def __init__(self, text, required_concepts, output_concept, prohibitive_concepts=[]):
+    def __init__(self, text, required_concepts, output_concepts, prohibitive_concepts=[]):
 
         self.text = text
 
@@ -43,15 +43,16 @@ class NarrativePiece:
         for args in reqs_names_to_params.values():
             linked_parameters.append(args)
 
-        input_to_output_params = {}
+        input_to_output_params = collections.defaultdict(list)
 
-        for name, arg in output_concept.get_named_params():
-            for param in reqs_names_to_params[name]:
-                input_to_output_params[param] = arg
+        for output_concept in output_concepts:
+            for name, out_param in output_concept.get_named_params():
+                for param in reqs_names_to_params[name]:
+                    input_to_output_params[param].append(out_param)
 
         self.required_concepts = [req.get_concept() for req in required_concepts]
         self.prohibitive_concepts = [req.get_concept() for req in prohibitive_concepts]
-        self.output_concept = output_concept.get_concept()
+        self.output_concepts = [req.get_concept() for req in output_concepts]
         self.input_to_output_params = input_to_output_params
         self.linked_parameters = linked_parameters
 
