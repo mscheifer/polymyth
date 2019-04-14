@@ -1,4 +1,4 @@
-from story import Concept, NarrativePiece, one_to_one_piece, story_end
+from story import Concept, NarrativePiece, MakeBeat, one_to_one_piece, story_end
 
 # Parm types
 charParam = 'char_param_type'
@@ -32,6 +32,7 @@ selfDefenseKillPerp = Concept([charParam], "selfDefenseKillPerp")
 # 1st parameter is the detective
 closure = Concept([charParam], "closure")
 
+isProtag = Concept([charParam])
 isPerp = Concept([charParam])
 
 isDead = Concept([charParam])
@@ -40,13 +41,25 @@ isArmed = Concept([charParam], "isArmed")
 
 isObsessive = Concept([charParam])
 
+wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
+regainFaith = Concept([charParam], "regainFaith")
+
 narrative_pieces = (
     [
         NarrativePiece("Introduce PI", [], characterIsPI),
+        MakeBeat("PI is protagonist")
+            .needs([characterIsPI(1)])
+            .if_not([isProtag]) # any
+            .sets_up(isProtag(1)),
+
         NarrativePiece("Introduce dead brother", [], characterHasDeadBrother),
         one_to_one_piece("Father missing case", characterIsPI, caseOfMissingFather),
     ] +
-    ([NarrativePiece("Asks old boss for help", [hasACase(1)], hasGuidance(1))
+    ([MakeBeat("Asks old boss for help")
+        .needs([hasACase(1)])
+        .if_not([isProtag(2)])
+        .sets_up(hasGuidance(1, 2))
+
         for hasACase in [caseOfMissingFather]
     ]) +
     [
@@ -73,6 +86,10 @@ narrative_pieces = (
     ([NarrativePiece("Client learns who kidnapped/killed father and thanks PI for closure",
             [isPerp(1), perpResolved(1)], story_end)
         for perpResolved in [isDead, isArrested]
+    ] +
+    [
+        NarrativePiece("Wife died randomly. Said something random.", [], wifeDiedRandomly),
+        NarrativePiece("Wife last words become meaningful.", [wifeDiedRandomly(1)], regainFaith(1)),
     ])
 )
 

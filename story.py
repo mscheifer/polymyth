@@ -4,12 +4,37 @@ import collections
 # the pieces to create novelty. Repeating the same building blocks does not sound repetative, just
 # like words.
 
+class MakeBeat:
+    def __init__(self, text):
+        self.text = text
+        self.required_concepts = []
+        self.prohibitive_concepts = []
+
+    def needs(self, required_concepts):
+        self.required_concepts = required_concepts
+        return self
+
+    def if_not(self, prohibitive_concepts):
+        self.prohibitive_concepts = prohibitive_concepts
+        return self
+
+    def sets_up(self, output_concept):
+        return NarrativePiece(
+            self.text, self.required_concepts, output_concept, self.prohibitive_concepts
+        )
+
 class NarrativePiece:
-    def __init__(self, text, required_concepts, output_concept):
+    def __init__(self, text, required_concepts, output_concept, prohibitive_concepts=[]):
+
+        self.text = text
 
         reqs_names_to_params = collections.defaultdict(list)
 
         for concept in required_concepts:
+            for name, arg in concept.get_named_params():
+                reqs_names_to_params[name].append(arg)
+
+        for concept in prohibitive_concepts:
             for name, arg in concept.get_named_params():
                 reqs_names_to_params[name].append(arg)
 
@@ -24,11 +49,12 @@ class NarrativePiece:
             for param in reqs_names_to_params[name]:
                 input_to_output_params[param] = arg
 
-        self.text = text
         self.required_concepts = [req.get_concept() for req in required_concepts]
+        self.prohibitive_concepts = [req.get_concept() for req in prohibitive_concepts]
         self.output_concept = output_concept.get_concept()
         self.input_to_output_params = input_to_output_params
         self.linked_parameters = linked_parameters
+
         assert iter(linked_parameters)
         for link_set in linked_parameters:
             assert iter(link_set)
@@ -39,6 +65,9 @@ class NarrativePiece:
 class Parameter:
     def __init__(self, p_type):
         self.p_type = p_type
+
+    def __str__(self):
+        return "P" + self.p_type
 
 class Concept:
     # is exclusive is whether two parameters can be bound to the same thing

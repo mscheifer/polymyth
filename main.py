@@ -66,6 +66,8 @@ def tryBindAndUpdate(narrative_piece, established_ideas, ideas_that_have_lead_to
             bound_arguments[p_a[0]] = p_a[1]
         used_ideas.append(idea)
 
+    # TODO: need to use linked prohibitive concepts to skip establishment
+
     #TODO: if the bound arguments we picked didn't work out, we need to look for other established
     # ideas that would lead to different bindings
 
@@ -130,7 +132,7 @@ def tryBindAndUpdate(narrative_piece, established_ideas, ideas_that_have_lead_to
     for idea in used_ideas:
         ideas_that_have_lead_to_something[idea] = True
 
-    return output_bound_args
+    return output_arguments
 
 established_ideas = []
 ideas_that_have_lead_to_something = {}
