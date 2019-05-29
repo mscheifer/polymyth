@@ -20,21 +20,26 @@ class MakeBeat:
 
     def sets_up(self, *output_concepts):
         return NarrativePiece(
-            self.text, self.required_concepts, output_concepts, self.prohibitive_concepts
+            self.text,
+            self.required_concepts,
+            output_concepts,
+            self.prohibitive_concepts
+            self.resolved_concepts
         )
 
 class NarrativePiece:
-    def __init__(self, text, required_concepts, output_concepts, prohibitive_concepts=[]):
-
+    def __init__(
+        self,
+        text,
+        required_concepts,
+        output_concepts,
+        prohibitive_concepts,
+    ):
         self.text = text
 
         reqs_names_to_params = collections.defaultdict(list)
 
-        for concept in required_concepts:
-            for name, arg in concept.get_named_params():
-                reqs_names_to_params[name].append(arg)
-
-        for concept in prohibitive_concepts:
+        for concept in required_concepts + prohibitive_concepts:
             for name, arg in concept.get_named_params():
                 reqs_names_to_params[name].append(arg)
 
