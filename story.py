@@ -1,4 +1,5 @@
 import collections
+import itertools
 
 # If we break the narrative down into small enough pieces, it becomes a language. We can recombine
 # the pieces to create novelty. Repeating the same building blocks does not sound repetative, just
@@ -24,7 +25,6 @@ class MakeBeat:
             self.required_concepts,
             output_concepts,
             self.prohibitive_concepts
-            self.resolved_concepts
         )
 
 class NarrativePiece:
@@ -39,7 +39,7 @@ class NarrativePiece:
 
         reqs_names_to_params = collections.defaultdict(list)
 
-        for concept in required_concepts + prohibitive_concepts:
+        for concept in itertools.chain(required_concepts, prohibitive_concepts):
             for name, arg in concept.get_named_params():
                 reqs_names_to_params[name].append(arg)
 

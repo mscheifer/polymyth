@@ -1,4 +1,10 @@
-from story import Concept, NarrativePiece, MakeBeat, one_to_one_piece, story_end
+from story import (
+    Concept,
+    NarrativePiece,
+    MakeBeat,
+    one_to_one_piece,
+    story_end
+)
 
 # Parm types
 charParam = 'char_param_type'
@@ -72,20 +78,20 @@ narrative_pieces = (
         MakeBeat("Finds father dead.").needs(inFathersAppartment).sets_up(foundDeadFather),
 
         NarrativePiece("Knows now that his old boss did it.", [foundDeadFather(1), hasGuidance(1,2)],
-            [foundEvidenceOfPerp(1,2)]),
+            [foundEvidenceOfPerp(1,2)], []),
 
-        NarrativePiece("Goes to his old bosses place.", [foundEvidenceOfPerp(1,2)], [isAtHouse(1,2)]),
+        NarrativePiece("Goes to his old bosses place.", [foundEvidenceOfPerp(1,2)], [isAtHouse(1,2)], []),
 
-        NarrativePiece("Boss sees PI and bolts.", [isAtHouse(0,1), isPerp(1)], [runsAway(1)]),
+        NarrativePiece("Boss sees PI and bolts.", [isAtHouse(0,1), isPerp(1)], [runsAway(1)], []),
 
         MakeBeat("PI chases old boss.").needs(runsAway(1)).sets_up(chasing(1)),
 
         NarrativePiece("Frog 1 is here and I'm going to get him..", [chasing(1), isObsessive(1)],
-            [story_end]),
+            [story_end], []),
 
         MakeBeat("Old boss gets cornered down an alley.").needs(chasing(1,2)).sets_up(cornered(1,2)),
         NarrativePiece("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.",
-            [cornered(1), isArmed(1)], [isDead(1)])
+            [cornered(1), isArmed(1)], [isDead(1)], [])
     ] +
     ([MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
             .needs(isPerp(1), perpResolved(1))
@@ -109,8 +115,8 @@ to_add_later = (
     [
         NarrativePiece("You should first describe my life by how I overcame a youthful obsession " +
             "with discrete mathematics and found love with continuous values. Real beauty exists " +
-            "again within itself and does not stop at some arbitrary depth.", [], [discreteToContinuous]),
-        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], [story_end]),
+            "again within itself and does not stop at some arbitrary depth.", [], [discreteToContinuous], []),
+        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], [story_end], []),
     ]
 )
 
