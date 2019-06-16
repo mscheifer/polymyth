@@ -1,6 +1,8 @@
 import itertools
-import story
+import random
+
 import noir
+import story
 
 def has_duplicates(iterable):
     return len(iterable) > len(set(iterable))
@@ -133,13 +135,22 @@ def can_beat_be_used(narrative_piece, established_ideas):
 
     return established_ideas, used_ideas
 
-def try_update_with_beat(narrative_piece, established_ideas, ideas_that_have_lead_to_something):
+def get_ideas_that_have_lead_nowhere(established_ideas, ideas_that_have_lead_to_something):
+    return (
+        idea for idea in established_ideas
+            if not ideas_that_have_lead_to_something.get(idea, False)
+    )
+
+def try_update_with_beat(
+    narrative_piece, established_ideas, ideas_that_have_lead_to_something
+):
     for output_concept in narrative_piece.output_concepts:
         if output_concept is story.story_end:
-            for idea in established_ideas:
-                if not ideas_that_have_lead_to_something.get(idea, False):
-                    # We can't end the story yet because not all ideas have lead to something
-                    return None
+            # lazily check if there's at least one that has lead nowhere
+            if next(get_ideas_that_have_lead_nowhere(
+                established_ideas, ideas_that_have_lead_to_something
+            ), None) is not None:
+                return None
 
     can = can_beat_be_used(narrative_piece, established_ideas)
 
@@ -169,7 +180,10 @@ if __name__ == '__main__':
         count = count + 1
         bound_arguments = None
         narrative_piece = None
-        for piece in noir.narrative_pieces:
+        
+        pieces = noir.narrative_pieces.copy()
+        random.shuffle(pieces)
+        for piece in pieces:
             arguments = try_update_with_beat(
                 piece, established_ideas, ideas_that_have_lead_to_something
             )
@@ -184,3 +198,8 @@ if __name__ == '__main__':
             for output_concept in narrative_piece.output_concepts:
                 if output_concept is story.story_end:
                     stillTelling = False
+
+    for unused_idea in get_ideas_that_have_lead_nowhere(
+        established_ideas, ideas_that_have_lead_to_something
+    ):
+        print("error: unused idea -", unused_idea)
