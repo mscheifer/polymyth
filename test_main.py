@@ -42,10 +42,21 @@ class TestMain(unittest.TestCase):
 
     def test_can_beat_be_used(self):
         concept = story.Concept([])
+        concept2 = story.Concept([])
         beat = story.MakeBeat('a').sets_up(concept)
 
         # A story beat with no requirements can be used even with no pre-established ideas.
-        self.assertTrue(main.can_beat_be_used(beat, []))
+        self.assertIsNotNone(main.can_beat_be_used(beat, []))
+
+        beatWithReq = story.MakeBeat('b').needs(concept2).sets_up(concept)
+
+        self.assertIsNone(main.can_beat_be_used(beatWithReq, []))
+
+        prohibitedBeat = story.MakeBeat('c').if_not(concept2).sets_up(concept)
+
+        self.assertIsNone(
+            main.can_beat_be_used(prohibitedBeat, [main.EstablishedIdea(concept2, [])])
+        )
 
         # TODO: test an exclusive and non-exclusive output concept together, that is definitely
         # broken

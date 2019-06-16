@@ -43,18 +43,21 @@ def is_established_by(concept, established_idea, bound_arguments):
                        # another concept in this piece
     return True
 
+def get_established_idea(established_ideas, concept, bound_args):
+    return next(
+        (idea for idea in established_ideas if is_established_by(
+            concept, idea, bound_args
+        )),
+        None
+    )
+
 def can_beat_be_used(narrative_piece, established_ideas):
     bound_arguments = {}
     used_ideas = []
     for concept in narrative_piece.required_concepts:
         linked_bound_args = get_linked_bound_args(narrative_piece, concept, bound_arguments)
         # lazily find the first idea that this concept is established by
-        idea = next(
-            (idea for idea in established_ideas if is_established_by(
-                concept, idea, linked_bound_args
-            )),
-            None
-        )
+        idea = get_established_idea(established_ideas, concept, linked_bound_args)
         if idea is None:
             return None # we didn't find an idea to match this concept
         for p_a in zip(concept.parameters, idea.arguments):
@@ -62,7 +65,12 @@ def can_beat_be_used(narrative_piece, established_ideas):
             bound_arguments[p_a[0]] = p_a[1]
         used_ideas.append(idea)
 
-    # TODO: need to use linked prohibitive concepts to skip establishment
+    for prohibitive_concept in narrative_piece.prohibitive_concepts:
+        established_idea = get_established_idea(
+            established_ideas, prohibitive_concept, bound_arguments
+        )
+        if established_idea is not None:
+            return None # One of the prohibitive concepts is already established
 
     #TODO: if the bound arguments we picked didn't work out, we need to look for other established
     # ideas that would lead to different bindings
@@ -122,7 +130,7 @@ def can_beat_be_used(narrative_piece, established_ideas):
         # different established ideas
         return None
 
-    established_ideas = []
+    newly_established_ideas = []
 
     for output_concept in narrative_piece.output_concepts:
         output_arguments = [] 
@@ -131,9 +139,9 @@ def can_beat_be_used(narrative_piece, established_ideas):
             assert bound_arg is not None
             output_arguments.append(bound_arg)
 
-        established_ideas.append(EstablishedIdea(output_concept, output_arguments))
+        newly_established_ideas.append(EstablishedIdea(output_concept, output_arguments))
 
-    return established_ideas, used_ideas
+    return newly_established_ideas, used_ideas
 
 def get_ideas_that_have_lead_nowhere(established_ideas, ideas_that_have_lead_to_something):
     return (
