@@ -5,6 +5,7 @@ from story import (
     one_to_one_piece,
     story_end
 )
+import heros_journey
 
 # Parm types
 charParam = 'char_param_type'
@@ -13,6 +14,7 @@ characterHasDeadBrother = Concept([charParam], "deadBro")
 characterIsPI = Concept([charParam], "isPI")
 
 # 1st parameter is the detective
+hasACase = Concept([charParam], "hasACase")
 caseOfMissingFather = Concept([charParam], "missingFather")
 
 # 1st parameter is the detective, 2nd is mentor
@@ -38,32 +40,50 @@ selfDefenseKillPerp = Concept([charParam], "selfDefenseKillPerp")
 # 1st parameter is the detective
 closure = Concept([charParam], "closure")
 
-storyStart = Concept([])
+storyStart = Concept([], "##start##")
 
-isProtag = Concept([charParam])
-isPerp = Concept([charParam])
+isProtag = Concept([charParam], "isProtag")
+isPerp = Concept([charParam], "isPerp")
+isClient = Concept([charParam], "isClient")
 
-isDead = Concept([charParam])
-isArrested = Concept([charParam])
+isInPIOffice = Concept([charParam], "isInPIOffice")
+isDead = Concept([charParam], "isDead")
+isArrested = Concept([charParam], "isArrested")
 isArmed = Concept([charParam], "isArmed")
 
-isObsessive = Concept([charParam])
+isObsessive = Concept([charParam], "isObessive")
 
 wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
 regainFaith = Concept([charParam], "regainFaith")
+
+politicalScandal = Concept([], "politicalScandal")
 
 narrative_pieces = (
     [
         MakeBeat("Introduce PI")
             .if_not(storyStart) # any
-            .sets_up(characterIsPI, storyStart),
+            .sets_up(storyStart, characterIsPI(1), isInPIOffice(1)),
         MakeBeat("PI is protagonist")
             .needs(characterIsPI(1))
             .if_not(isProtag) # any
             .sets_up(isProtag(1)),
 
-        MakeBeat("Introduce dead brother").sets_up(characterHasDeadBrother),
-        MakeBeat("Father missing case").needs(characterIsPI).sets_up(caseOfMissingFather),
+        MakeBeat("Reads political scandal in paper")
+            .needs(isInPIOffice)
+            .sets_up(politicalScandal),
+
+        MakeBeat("Introduce dead brother")
+            .if_not(characterHasDeadBrother)
+            .if_not(heros_journey.ghost)
+            .sets_up(characterHasDeadBrother, heros_journey.you, heros_journey.ghost),
+        MakeBeat("Client walks in")
+            .if_not(isInPIOffice(-1), isClient(-1)) # for any other char
+            .needs(characterIsPI(0), isInPIOffice(0))
+            .sets_up(isInPIOffice(1), isClient(1)),
+        MakeBeat("Father missing case")
+            .needs(characterIsPI(0), isInPIOffice(1), isClient(1))
+            .if_not(hasACase) #Any
+            .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
     ] +
     ([MakeBeat("Asks old boss for help")
         .needs(hasACase(1))
@@ -73,25 +93,41 @@ narrative_pieces = (
         for hasACase in [caseOfMissingFather]
     ]) +
     [
-        MakeBeat("Secretly, the boss did it.").needs(hasGuidance(0,1)).sets_up(isPerp(1)),
-        MakeBeat("Breaks into father's appartment.").needs(hasGuidance(1)).sets_up(inFathersAppartment(1)),
-        MakeBeat("Finds father dead.").needs(inFathersAppartment).sets_up(foundDeadFather),
+        MakeBeat("Breaks into father's appartment.")
+            .needs(hasGuidance(1))
+            .sets_up(inFathersAppartment(1)),
 
-        NarrativePiece("Knows now that his old boss did it.", [foundDeadFather(1), hasGuidance(1,2)],
-            [foundEvidenceOfPerp(1,2)], []),
+        MakeBeat("Finds father dead.")
+            .needs(inFathersAppartment)
+            .sets_up(foundDeadFather, heros_journey.go),
 
-        NarrativePiece("Goes to his old bosses place.", [foundEvidenceOfPerp(1,2)], [isAtHouse(1,2)], []),
+        #TODO(act 2)
 
-        NarrativePiece("Boss sees PI and bolts.", [isAtHouse(0,1), isPerp(1)], [runsAway(1)], []),
+        MakeBeat("Finds evidence his old boss did it.")
+            .needs(foundDeadFather(1), hasGuidance(1,2))
+            .sets_up(foundEvidenceOfPerp(1,2), isPerp(2)),
+
+        MakeBeat("Goes to his old bosses place.")
+            .needs(foundEvidenceOfPerp(1,2))
+            .sets_up(isAtHouse(1,2)),
+
+        MakeBeat("Boss sees PI and bolts.")
+            .needs(isAtHouse(0,1), isPerp(1))
+            .sets_up(runsAway(1)),
 
         MakeBeat("PI chases old boss.").needs(runsAway(1)).sets_up(chasing(1)),
 
-        NarrativePiece("Frog 1 is here and I'm going to get him..", [chasing(1), isObsessive(1)],
-            [story_end], []),
+        MakeBeat("Frog 1 is here and I'm going to get him..")
+            .needs(chasing(1), isObsessive(1))
+            .sets_up(story_end),
 
-        MakeBeat("Old boss gets cornered down an alley.").needs(chasing(1,2)).sets_up(cornered(1,2)),
-        NarrativePiece("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.",
-            [cornered(1), isArmed(1)], [isDead(1)], [])
+        MakeBeat("Old boss gets cornered down an alley.")
+            .needs(chasing(1,2))
+            .sets_up(cornered(1,2)),
+
+        MakeBeat("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.")
+            .needs(cornered(1), isArmed(1))
+            .sets_up(isDead(1))
     ] +
     ([MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
             .needs(isPerp(1), perpResolved(1))
@@ -99,8 +135,13 @@ narrative_pieces = (
         for perpResolved in [isDead, isArrested]
     ] +
     [
-        MakeBeat("Wife died randomly. Said something random.").sets_up(wifeDiedRandomly),
-        MakeBeat("Wife last words become meaningful.").needs(wifeDiedRandomly(1)).sets_up(regainFaith(1)),
+        MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
+            .if_not(wifeDiedRandomly)
+            .if_not(heros_journey.ghost)
+            .sets_up(wifeDiedRandomly, heros_journey.ghost),
+        MakeBeat("Wife last words become meaningful.")
+            .needs(wifeDiedRandomly(1), heros_journey.theReturn)
+            .sets_up(regainFaith(1), heros_journey.change),
     ])
 )
 

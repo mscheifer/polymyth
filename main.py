@@ -44,12 +44,10 @@ def is_established_by(concept, established_idea, bound_arguments):
     return True
 
 def get_established_idea(established_ideas, concept, bound_args):
-    return next(
-        (idea for idea in established_ideas if is_established_by(
-            concept, idea, bound_args
-        )),
-        None
-    )
+    for idea in established_ideas:
+        if is_established_by(concept, idea, bound_args):
+            return idea
+    return None
 
 def can_beat_be_used(narrative_piece, established_ideas):
     bound_arguments = {}
@@ -65,12 +63,13 @@ def can_beat_be_used(narrative_piece, established_ideas):
             bound_arguments[p_a[0]] = p_a[1]
         used_ideas.append(idea)
 
-    for prohibitive_concept in narrative_piece.prohibitive_concepts:
-        established_idea = get_established_idea(
-            established_ideas, prohibitive_concept, bound_arguments
-        )
-        if established_idea is not None:
-            return None # One of the prohibitive concepts is already established
+    for prohibitive_concept_tuple in narrative_piece.prohibitive_concept_tuples:
+        #TODO:(we need to bind anything we find in the prohibitive tuple)
+        if all(
+            get_established_idea(established_ideas, prohibitive_concept, bound_arguments)
+            is not None for prohibitive_concept in prohibitive_concept_tuple
+        ):
+            return None # One of the prohibitive concept tuples is already established
 
     #TODO: if the bound arguments we picked didn't work out, we need to look for other established
     # ideas that would lead to different bindings

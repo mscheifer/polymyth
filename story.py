@@ -9,14 +9,17 @@ class MakeBeat:
     def __init__(self, text):
         self.text = text
         self.required_concepts = []
-        self.prohibitive_concepts = []
+        self.prohibitive_concept_tuples = []
 
     def needs(self, *required_concepts):
         self.required_concepts = required_concepts
         return self
 
+    # One call to if_not() creates a set of concepts that must all be present for this beat to be
+    # prohibited. If you want to prohibit this beat for any of several concepts, just call if_not()
+    # for each one.
     def if_not(self, *prohibitive_concepts):
-        self.prohibitive_concepts = prohibitive_concepts
+        self.prohibitive_concept_tuples.append(tuple(prohibitive_concepts))
         return self
 
     def sets_up(self, *output_concepts):
@@ -24,7 +27,7 @@ class MakeBeat:
             self.text,
             self.required_concepts,
             output_concepts,
-            self.prohibitive_concepts
+            self.prohibitive_concept_tuples
         )
 
 class NarrativePiece:
@@ -33,13 +36,13 @@ class NarrativePiece:
         text,
         required_concepts,
         output_concepts,
-        prohibitive_concepts,
+        prohibitive_concept_tuples,
     ):
         self.text = text
 
         reqs_names_to_params = collections.defaultdict(list)
 
-        for concept in itertools.chain(required_concepts, prohibitive_concepts):
+        for concept in itertools.chain(required_concepts, *prohibitive_concept_tuples):
             for name, arg in concept.get_named_params():
                 reqs_names_to_params[name].append(arg)
 
@@ -56,7 +59,10 @@ class NarrativePiece:
                     input_to_output_params[param].append(out_param)
 
         self.required_concepts = [req.get_concept() for req in required_concepts]
-        self.prohibitive_concepts = [req.get_concept() for req in prohibitive_concepts]
+        self.prohibitive_concept_tuples = [
+            (req.get_concept() for req in prohibitive_concepts)
+            for prohibitive_concepts in prohibitive_concept_tuples
+        ]
         self.output_concepts = [req.get_concept() for req in output_concepts]
         self.input_to_output_params = input_to_output_params
         self.linked_parameters = linked_parameters
