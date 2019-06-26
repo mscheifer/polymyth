@@ -25,7 +25,7 @@ def get_linked_bound_args(narrative_piece, concept, bound_arguments):
                 for other_param in link_set:
                     if other_param in bound_arguments:
                         existing_val = linked_bound_args.get(parameter)
-                        assert existing_val is None or exisiting_val is bound_args[other_param]
+                        assert existing_val is None or existing_val is bound_arguments[other_param]
                         linked_bound_args[parameter] = bound_arguments[other_param]
 
     return linked_bound_args

@@ -61,5 +61,25 @@ class TestMain(unittest.TestCase):
         # TODO: test an exclusive and non-exclusive output concept together, that is definitely
         # broken
 
+    def test_can_beat_be_used__linked_reqs(self):
+        concept = story.Concept([])
+
+        linkedConceptA = story.Concept(['c'])
+        linkedConceptB = story.Concept(['c'])
+        linkedConceptC = story.Concept(['c'])
+
+        beatWithLinkedReqs = (story.MakeBeat('b')
+             .needs(linkedConceptA(0), linkedConceptB(0), linkedConceptC(0))
+             .sets_up(concept)
+        )
+
+        self.assertIsNotNone(
+            main.can_beat_be_used(beatWithLinkedReqs, [
+                main.EstablishedIdea(linkedConceptA, ['s']),
+                main.EstablishedIdea(linkedConceptB, ['s']),
+                main.EstablishedIdea(linkedConceptC, ['s']),
+            ])
+        )
+
 if __name__ == '__main__':
     unittest.main()
