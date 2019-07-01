@@ -81,5 +81,24 @@ class TestMain(unittest.TestCase):
             ])
         )
 
+    def test_can_beat_be_used__multiple_possilbe_bound_args(self):
+        concept = story.Concept(['param'])
+        concept2 = story.Concept(['param'])
+        concept3 = story.Concept([])
+
+        established_ideas = [
+            main.EstablishedIdea(concept, ['s0']),
+            main.EstablishedIdea(concept, ['s1']),
+            main.EstablishedIdea(concept2, ['s0']),
+        ]
+
+        beat = (story.MakeBeat('b')
+             .needs(concept(0))
+             .if_not(concept2(0))
+             .sets_up(concept3)
+        )
+        
+        self.assertIsNotNone(main.can_beat_be_used(beat, established_ideas))
+
 if __name__ == '__main__':
     unittest.main()
