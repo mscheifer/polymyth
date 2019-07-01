@@ -51,6 +51,10 @@ isDead = Concept([charParam], "isDead")
 isArrested = Concept([charParam], "isArrested")
 isArmed = Concept([charParam], "isArmed")
 
+fatherHungOutAtSeedyBar = Concept([], "fatherHungOutAtSeedyBar")
+atSeedyBar = Concept([], "atSeedyBar")
+talkingToMysteriousWoman = Concept([], "talkingToMysteriousWoman")
+
 isObsessive = Concept([charParam], "isObessive")
 
 wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
@@ -84,15 +88,13 @@ narrative_pieces = (
             .needs(characterIsPI(0), isInPIOffice(1), isClient(1))
             .if_not(hasACase) #Any
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
-    ] +
-    ([MakeBeat("Asks old boss for help")
-        .needs(hasACase(1))
-        .if_not(isProtag(2))
-        .sets_up(hasGuidance(1, 2))
 
-        for hasACase in [caseOfMissingFather]
-    ]) +
-    [
+        MakeBeat("Asks old boss for help")
+            .needs(hasACase(1))
+            .if_not(isProtag(2))
+            .if_not(isClient(2))
+            .sets_up(hasGuidance(1, 2)),
+
         MakeBeat("Breaks into father's appartment.")
             .needs(hasGuidance(1))
             .sets_up(inFathersAppartment(1)),
@@ -101,11 +103,29 @@ narrative_pieces = (
             .needs(inFathersAppartment)
             .sets_up(foundDeadFather, heros_journey.go),
 
-        #TODO(act 2)
+        MakeBeat("Finds matchbox on father's body.")
+            .needs(foundDeadFather)
+            .sets_up(fatherHungOutAtSeedyBar),
+
+        MakeBeat("Goes to seedy bar.")
+            .needs(fatherHungOutAtSeedyBar)
+            .sets_up(atSeedyBar),
+
+        MakeBeat("Talks to mysterious woman.")
+            .needs(atSeedyBar)
+            .sets_up(talkingToMysteriousWoman),
+
+        MakeBeat("Mystery woman says you have to accept loss.")
+            .needs(characterHasDeadBrother, talkingToMysteriousWoman)
+            .sets_up(heros_journey.find),
+
+        MakeBeat("Mystery woman says you have to have faith.")
+            .needs(wifeDiedRandomly, talkingToMysteriousWoman)
+            .sets_up(heros_journey.find),
 
         MakeBeat("Finds evidence his old boss did it.")
-            .needs(foundDeadFather(1), hasGuidance(1,2))
-            .sets_up(foundEvidenceOfPerp(1,2), isPerp(2)),
+            .needs(heros_journey.find, hasGuidance(1,2))
+            .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
 
         MakeBeat("Goes to his old bosses place.")
             .needs(foundEvidenceOfPerp(1,2))
