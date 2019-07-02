@@ -1,6 +1,7 @@
 import unittest
 import story
 import main
+import random
 
 class TestMain(unittest.TestCase):
 
@@ -82,9 +83,9 @@ class TestMain(unittest.TestCase):
         )
 
     def test_can_beat_be_used__multiple_possilbe_bound_args(self):
-        concept = story.Concept(['param'])
-        concept2 = story.Concept(['param'])
-        concept3 = story.Concept([])
+        concept = story.Concept(['param'], "c1")
+        concept2 = story.Concept(['param'], "c2")
+        concept3 = story.Concept([], "c3")
 
         established_ideas = [
             main.EstablishedIdea(concept, ['s0']),
@@ -101,4 +102,5 @@ class TestMain(unittest.TestCase):
         self.assertIsNotNone(main.can_beat_be_used(beat, established_ideas))
 
 if __name__ == '__main__':
+    random.seed(1234) # for deterministic tests
     unittest.main()
