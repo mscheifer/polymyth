@@ -1,7 +1,13 @@
 import unittest
+import random
+
 import story
 import main
-import random
+
+#TODO remove this dependency by allowing passing in param values
+from noir import charParam, free_arguments
+
+chars = sorted(free_arguments[charParam])
 
 class TestMain(unittest.TestCase):
 
@@ -65,9 +71,9 @@ class TestMain(unittest.TestCase):
     def test_can_beat_be_used__linked_reqs(self):
         concept = story.Concept([])
 
-        linkedConceptA = story.Concept(['c'])
-        linkedConceptB = story.Concept(['c'])
-        linkedConceptC = story.Concept(['c'])
+        linkedConceptA = story.Concept([charParam])
+        linkedConceptB = story.Concept([charParam])
+        linkedConceptC = story.Concept([charParam])
 
         beatWithLinkedReqs = (story.MakeBeat('b')
              .needs(linkedConceptA(0), linkedConceptB(0), linkedConceptC(0))
@@ -76,21 +82,21 @@ class TestMain(unittest.TestCase):
 
         self.assertIsNotNone(
             main.can_beat_be_used(beatWithLinkedReqs, [
-                main.EstablishedIdea(linkedConceptA, ['s']),
-                main.EstablishedIdea(linkedConceptB, ['s']),
-                main.EstablishedIdea(linkedConceptC, ['s']),
+                main.EstablishedIdea(linkedConceptA, [chars[0]]),
+                main.EstablishedIdea(linkedConceptB, [chars[0]]),
+                main.EstablishedIdea(linkedConceptC, [chars[0]]),
             ])
         )
 
     def test_can_beat_be_used__multiple_possilbe_bound_args(self):
-        concept = story.Concept(['param'], "c1")
-        concept2 = story.Concept(['param'], "c2")
+        concept = story.Concept([charParam], "c1")
+        concept2 = story.Concept([charParam], "c2")
         concept3 = story.Concept([], "c3")
 
         established_ideas = [
-            main.EstablishedIdea(concept, ['s0']),
-            main.EstablishedIdea(concept, ['s1']),
-            main.EstablishedIdea(concept2, ['s0']),
+            main.EstablishedIdea(concept, [chars[0]]),
+            main.EstablishedIdea(concept, [chars[1]]),
+            main.EstablishedIdea(concept2, [chars[0]]),
         ]
 
         beat = (story.MakeBeat('b')
@@ -99,6 +105,21 @@ class TestMain(unittest.TestCase):
              .sets_up(concept3)
         )
         
+        self.assertIsNotNone(main.can_beat_be_used(beat, established_ideas))
+
+    def test_can_beat_be_used__prohibited_linked_to_output(self):
+        concept = story.Concept([charParam], "c1")
+        concept2 = story.Concept([charParam], "c2")
+
+        established_ideas = [
+            main.EstablishedIdea(concept, [chars[0]]),
+        ]
+
+        beat = (story.MakeBeat('b')
+             .if_not(concept(0))
+             .sets_up(concept2(0))
+        )
+
         self.assertIsNotNone(main.can_beat_be_used(beat, established_ideas))
 
 if __name__ == '__main__':
