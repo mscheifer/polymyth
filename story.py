@@ -1,6 +1,8 @@
 import collections
 import itertools
 
+import util
+
 # If we break the narrative down into small enough pieces, it becomes a language. We can recombine
 # the pieces to create novelty. Repeating the same building blocks does not sound repetative, just
 # like words.
@@ -39,25 +41,25 @@ class NarrativePiece:
         output_concepts,
         prohibitive_concept_tuples,
     ):
+        all_concepts = list(itertools.chain(
+            required_concepts, output_concepts, *prohibitive_concept_tuples
+        ))
+        # Because we are storing linked parameters as big sets, it won't support multiple of
+        # the same concept right now
+        assert not util.has_duplicates(all_concepts)
+
         self.text = text
 
-        reqs_names_to_params = collections.defaultdict(list)
+        reqs_names_to_params = collections.defaultdict(set)
 
-        for concept in itertools.chain(required_concepts, *prohibitive_concept_tuples):
+        for concept in all_concepts:
             for name, arg in concept.get_named_params():
-                reqs_names_to_params[name].append(arg)
+                reqs_names_to_params[name].add(arg)
 
         linked_parameters = []
 
         for args in reqs_names_to_params.values():
             linked_parameters.append(args)
-
-        input_to_output_params = collections.defaultdict(list)
-
-        for output_concept in output_concepts:
-            for name, out_param in output_concept.get_named_params():
-                for param in reqs_names_to_params[name]:
-                    input_to_output_params[param].append(out_param)
 
         self.required_concepts = [req.get_concept() for req in required_concepts]
         self.prohibitive_concept_tuples = [
@@ -65,7 +67,6 @@ class NarrativePiece:
             for prohibitive_concepts in prohibitive_concept_tuples
         ]
         self.output_concepts = [req.get_concept() for req in output_concepts]
-        self.input_to_output_params = input_to_output_params
         self.linked_parameters = linked_parameters
 
         assert iter(linked_parameters)
