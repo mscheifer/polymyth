@@ -11,6 +11,7 @@ class MakeBeat:
         self.required_concepts = []
         self.prohibitive_concept_tuples = []
 
+    #TODO rename to 'ok_if' and have each call be OR'd (top level) and arguments are ANDed
     def needs(self, *required_concepts):
         self.required_concepts = required_concepts
         return self
@@ -60,7 +61,7 @@ class NarrativePiece:
 
         self.required_concepts = [req.get_concept() for req in required_concepts]
         self.prohibitive_concept_tuples = [
-            (req.get_concept() for req in prohibitive_concepts)
+            [req.get_concept() for req in prohibitive_concepts]
             for prohibitive_concepts in prohibitive_concept_tuples
         ]
         self.output_concepts = [req.get_concept() for req in output_concepts]
@@ -71,27 +72,28 @@ class NarrativePiece:
         for link_set in linked_parameters:
             assert iter(link_set)
 
-    def __str__(self):
+    def __repr__(self):
         return self.text
 
 class Parameter:
     def __init__(self, p_type):
         self.p_type = p_type
 
-    def __str__(self):
+    def __repr__(self):
         return "P" + self.p_type
 
 class Concept:
     # is exclusive is whether two parameters can be bound to the same thing
     def __init__(self, parameter_types, debug_name=None, is_exclusive=False):
+        assert isinstance(parameter_types, list)
         assert None not in parameter_types
         self.parameters = [Parameter(p_type) for p_type in parameter_types]
         self.debug_name = debug_name
         self.is_exclusive = is_exclusive
 
-    def __str__(self):
+    def __repr__(self):
         if self.debug_name is None:
-            return super().__str__()
+            return super().__repr__()
         return self.debug_name
 
     def __call__(self, *args):
