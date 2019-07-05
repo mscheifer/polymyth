@@ -41,18 +41,15 @@ class NarrativePiece:
         output_concepts,
         prohibitive_concept_tuples,
     ):
-        all_concepts = list(itertools.chain(
-            required_concepts, output_concepts, *prohibitive_concept_tuples
-        ))
-        # Because we are storing linked parameters as big sets, it won't support multiple of
-        # the same concept right now
-        assert not util.has_duplicates(all_concepts)
-
         self.text = text
+
+        all_named_param_concepts = itertools.chain(
+            required_concepts, output_concepts, *prohibitive_concept_tuples
+        )
 
         reqs_names_to_params = collections.defaultdict(set)
 
-        for concept in all_concepts:
+        for concept in all_named_param_concepts:
             for name, arg in concept.get_named_params():
                 reqs_names_to_params[name].add(arg)
 
@@ -68,6 +65,14 @@ class NarrativePiece:
         ]
         self.output_concepts = [req.get_concept() for req in output_concepts]
         self.linked_parameters = linked_parameters
+
+        # Because we are storing linked parameters as big sets, it won't support multiple of
+        # the same concept right now
+        assert not util.has_duplicates(list(itertools.chain(
+            self.required_concepts,
+            *self.prohibitive_concept_tuples,
+            self.output_concepts,
+        )))
 
         assert iter(linked_parameters)
         for link_set in linked_parameters:

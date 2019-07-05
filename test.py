@@ -138,6 +138,23 @@ class Test(unittest.TestCase):
 
         self.assertIsNotNone(state.can_beat_be_used(beat))
 
+    def test_can_beat_be_used__same_requirement_different_args(self):
+        concept = story.Concept([charParam], "c1")
+        concept2 = story.Concept([], "c2")
+
+        state = story_state.StoryState(free_arguments)
+        state.established_ideas = [
+            story_state.EstablishedIdea(concept, [chars[0]]),
+            story_state.EstablishedIdea(concept, [chars[1]]),
+        ]
+
+        beat = (story.MakeBeat('b')
+             .needs(concept(0), concept(1))
+             .sets_up(concept2())
+        )
+
+        self.assertIsNotNone(state.can_beat_be_used(beat))
+
 if __name__ == '__main__':
     random.seed(1234) # for deterministic tests
     unittest.main()
