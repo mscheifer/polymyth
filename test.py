@@ -33,9 +33,6 @@ class Test(unittest.TestCase):
         parameterized_concept = story.Concept(['blah'])
         idea_with_arg = story_state.EstablishedIdea(parameterized_concept, [argument])
 
-        # In a context where the parameter is free, idea of concept with a parameter establishes
-        # the concept (and the parameter should be bound afterwards)
-        self.assertTrue(story_state.is_established_by(parameterized_concept, idea_with_arg, {}))
         # In a context where the parameter is bound, idea of concept with the same parameter
         # establishes the concept.
         self.assertTrue(story_state.is_established_by(parameterized_concept, idea_with_arg, {
@@ -46,6 +43,17 @@ class Test(unittest.TestCase):
         self.assertFalse(story_state.is_established_by(parameterized_concept, idea_with_arg, {
             parameterized_concept.parameters[0]:'yoyoyo',
         }))
+
+    def test_try_is_established_and_bind(self):
+        argument = 'woo'
+
+        parameterized_concept = story.Concept(['blah'])
+        idea_with_arg = story_state.EstablishedIdea(parameterized_concept, [argument])
+        # In a context where the parameter is free, idea of concept with a parameter establishes
+        # the concept (and the parameter should be bound afterwards)
+        self.assertTrue(story_state.try_is_established_and_bind(
+            parameterized_concept, idea_with_arg, {})
+        )
 
     def test_can_beat_be_used(self):
         concept = story.Concept([])

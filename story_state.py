@@ -28,13 +28,14 @@ def get_linked_bound_args(narrative_piece, concept, bound_arguments):
     return linked_bound_args
 
 # is the required concept understood from the given established idea and
-# arguments we have bound from other understood concepts
+# arguments
 def is_established_by(concept, established_idea, bound_arguments):
     if established_idea.concept is not concept:
         return False
 
-    for p_a in zip(concept.parameters, established_idea.arguments):
-        if p_a[0] in bound_arguments and bound_arguments.get(p_a[0]) is not p_a[1]:
+    for p, a in zip(concept.parameters, established_idea.arguments):
+        assert p in bound_arguments
+        if bound_arguments.get(p) is not a:
             return False # This established idea has this same concept but for a
                        # different argument that we have already matched from
                        # another concept in this piece
@@ -45,6 +46,44 @@ def get_established_idea(established_ideas, concept, bound_args):
         if is_established_by(concept, idea, bound_args):
             return idea
     return None
+
+# See if the idea establishes the concept given the arguments. If some more
+# arguments need to be added then do so
+def try_is_established_and_bind(concept, idea, args):
+    if idea.concept is not concept:
+        return False
+
+    for p, a in zip(concept.parameters, idea.arguments):
+        if p in args:
+            if args.get(p) is not a:
+                return False
+        else:
+            assert p not in args
+            args[p] = a
+
+    return True
+
+# Return arguments to parameters in the required concepts if they are
+# established by the given ideas combo
+def get_bound_args_if_establishes(narrative_piece, ideas_combo):
+    bound_arguments = {}
+
+    for concept, idea in zip(narrative_piece.required_concepts, ideas_combo):
+
+        linked_bound_args = get_linked_bound_args(
+            narrative_piece, concept, bound_arguments
+        )
+        for param, arg in linked_bound_args.items():
+            assert param not in bound_arguments
+            bound_arguments[param] = arg
+
+        if not try_is_established_and_bind(
+            concept, idea, bound_arguments
+        ):
+            # this isn't a good combo of ideas and parameters
+            return None
+
+    return bound_arguments
 
 # Return a generator of bound arguments and used_ideas
 def get_possible_basis_ideas(narrative_piece, established_ideas):
@@ -59,39 +98,20 @@ def get_possible_basis_ideas(narrative_piece, established_ideas):
         len(narrative_piece.required_concepts)
     )]
 
-    for combo in itertools.product(*random_ideas):
-        bound_arguments = {}
+    combos = itertools.product(*random_ideas)
 
-        used_ideas = []
+    return (
+        (bound_arguments, combo) for bound_arguments, combo in (
+            (get_bound_args_if_establishes(narrative_piece, combo), combo)
+            for combo in combos
+        ) if bound_arguments is not None
+    )
 
-        for concept, idea in zip(narrative_piece.required_concepts, combo):
-            linked_bound_args = get_linked_bound_args(
-                narrative_piece, concept, bound_arguments
-            )
-            if is_established_by(concept, idea, linked_bound_args):
-                used_ideas.append(idea)
-
-                for p, a in zip(concept.parameters, idea.arguments):
-                    assert p not in bound_arguments
-                    bound_arguments[p] = a
-            else:
-                used_ideas.append(None)
-
-        if any(idea is None for idea in used_ideas):
-            continue # we didn't find a good combo of ideas and parameters
-
-        yield (bound_arguments, used_ideas)
-
-def is_prohibited(narrative_piece, established_ideas, bound_arguments):
+def is_prohibited(narrative_piece, established_ideas, arguments):
     for prohibitive_concept_tuple in narrative_piece.prohibitive_concept_tuples:
-        #TODO:(we need to bind anything we find in the prohibitive tuple)
         if all(
             get_established_idea(
-                established_ideas,
-                prohibitive_concept,
-                get_linked_bound_args(
-                    narrative_piece, prohibitive_concept, bound_arguments
-                )
+                established_ideas, prohibitive_concept, arguments
             )
             is not None for prohibitive_concept in prohibitive_concept_tuple
         ):
@@ -107,18 +127,19 @@ def get_ideas_that_have_lead_nowhere(established_ideas, ideas_that_have_lead_to_
 def try_get_output_args(
     narrative_piece, established_ideas, possible_free_args, all_bound_args
 ):
-    if is_prohibited(narrative_piece, established_ideas, all_bound_args):
+    all_args = all_bound_args.copy()
+    for param, arg in possible_free_args:
+        assert param not in all_args
+        all_args[param] = arg
+
+    if is_prohibited(narrative_piece, established_ideas, all_args):
         return None
 
     output_args = {}
     for output_concept in narrative_piece.output_concepts:
         for output_param in output_concept.parameters:
-            if output_param in all_bound_args:
-                output_args[output_param] = all_bound_args[output_param]
-
-    for param, arg in possible_free_args:
-        assert param not in output_args
-        output_args[param] = arg
+            assert output_param in all_args
+            output_args[output_param] = all_args[output_param]
 
     found_dup = False
 
@@ -174,10 +195,12 @@ class StoryState:
             output_args = None
 
             # This generator goes once if we have 0 free params (with an empty set of args)
-            #TODO: zip this with the parameter into a dict here
-            all_free_arg_combos_generator = (itertools.product(
-                *((param,self.free_arguments[param.p_type]) for param in free_parameters)
-            ))
+            all_free_arg_combos_generator = itertools.product(
+                *(
+                    [(param, arg) for arg in self.free_arguments[param.p_type]]
+                        for param in free_parameters
+                )
+            )
 
             lazy_possible_output_args = (
                 try_get_output_args(
