@@ -31,11 +31,9 @@ if __name__ == '__main__':
             stillTelling = False
         else:
             print(narrative_piece, " - ", arguments)
-            for output_concept in narrative_piece.output_concepts:
-                if output_concept is story.story_end:
+            for parameterized_concept in narrative_piece.parameterized_output_concepts:
+                if parameterized_concept.concept is story.story_end:
                     stillTelling = False
 
-    for unused_idea in get_ideas_that_have_lead_nowhere(
-        state.established_ideas, state.used_ideas
-    ):
+    for unused_idea in state.get_ideas_that_have_lead_nowhere():
         print("error: unused idea -", unused_idea)

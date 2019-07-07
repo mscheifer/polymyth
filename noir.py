@@ -2,7 +2,6 @@ from story import (
     Concept,
     NarrativePiece,
     MakeBeat,
-    one_to_one_piece,
     story_end
 )
 import heros_journey
@@ -65,28 +64,32 @@ politicalScandal = Concept([], "politicalScandal")
 narrative_pieces = (
     [
         MakeBeat("Introduce PI")
-            .if_not(storyStart) # any
+            .if_not(storyStart)
             .sets_up(storyStart, characterIsPI(1), isInPIOffice(1)),
         MakeBeat("PI is protagonist")
             .needs(characterIsPI(1))
-            .if_not(isProtag) # any
+            .if_not(isProtag('any'))
             .sets_up(isProtag(1)),
 
         MakeBeat("Reads political scandal in paper")
-            .needs(isInPIOffice)
+            .needs(isInPIOffice(0), isProtag(0))
             .sets_up(politicalScandal),
 
         MakeBeat("Introduce dead brother")
-            .if_not(characterHasDeadBrother)
+            .if_not(characterHasDeadBrother('any'))
             .if_not(heros_journey.ghost)
-            .sets_up(characterHasDeadBrother, heros_journey.you, heros_journey.ghost),
+            .needs(isProtag(0))
+            .sets_up(characterHasDeadBrother(0), heros_journey.you, heros_journey.ghost),
+
         MakeBeat("Client walks in")
             .if_not(isInPIOffice(-1), isClient(-1)) # for any other char
+            .if_not(characterIsPI(1))
             .needs(characterIsPI(0), isInPIOffice(0))
             .sets_up(isInPIOffice(1), isClient(1)),
+
         MakeBeat("Father missing case")
             .needs(characterIsPI(0), isInPIOffice(1), isClient(1))
-            .if_not(hasACase) #Any
+            .if_not(hasACase('any'))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
         MakeBeat("Asks old boss for help")
@@ -96,15 +99,15 @@ narrative_pieces = (
             .sets_up(hasGuidance(1, 2)),
 
         MakeBeat("Breaks into father's appartment.")
-            .needs(hasGuidance(1))
+            .needs(hasGuidance(1,2))
             .sets_up(inFathersAppartment(1)),
 
         MakeBeat("Finds father dead.")
-            .needs(inFathersAppartment)
-            .sets_up(foundDeadFather, heros_journey.go),
+            .needs(inFathersAppartment(1))
+            .sets_up(foundDeadFather(1), heros_journey.go),
 
         MakeBeat("Finds matchbox on father's body.")
-            .needs(foundDeadFather)
+            .needs(foundDeadFather(1))
             .sets_up(fatherHungOutAtSeedyBar),
 
         MakeBeat("Goes to seedy bar.")
@@ -115,12 +118,23 @@ narrative_pieces = (
             .needs(atSeedyBar)
             .sets_up(talkingToMysteriousWoman),
 
+        MakeBeat("Mystery woman says dead father betrayed brother.")
+            .needs(characterHasDeadBrother(1), talkingToMysteriousWoman)
+            .sets_up(),
+
+        MakeBeat("Mystery woman says dead father had no faith.")
+            .needs(wifeDiedRandomly(1), talkingToMysteriousWoman)
+            .sets_up(),
+
+        # sets up for character change at the end, this is needed to accept
+        # that the mentor was a bad guy
         MakeBeat("Mystery woman says you have to accept loss.")
-            .needs(characterHasDeadBrother, talkingToMysteriousWoman)
+            .needs(characterHasDeadBrother(1), talkingToMysteriousWoman)
             .sets_up(heros_journey.find),
 
+        # sets up for character change at the end
         MakeBeat("Mystery woman says you have to have faith.")
-            .needs(wifeDiedRandomly, talkingToMysteriousWoman)
+            .needs(wifeDiedRandomly(1), talkingToMysteriousWoman)
             .sets_up(heros_journey.find),
 
         MakeBeat("Finds evidence his old boss did it.")
@@ -135,10 +149,12 @@ narrative_pieces = (
             .needs(isAtHouse(0,1), isPerp(1))
             .sets_up(runsAway(1)),
 
-        MakeBeat("PI chases old boss.").needs(runsAway(1)).sets_up(chasing(1)),
+        MakeBeat("PI chases old boss.")
+            .needs(runsAway(1))
+            .sets_up(chasing(1, 2)),
 
         MakeBeat("Frog 1 is here and I'm going to get him..")
-            .needs(chasing(1), isObsessive(1))
+            .needs(chasing(1, 2), isObsessive(2))
             .sets_up(story_end),
 
         MakeBeat("Old boss gets cornered down an alley.")
@@ -146,7 +162,7 @@ narrative_pieces = (
             .sets_up(cornered(1,2)),
 
         MakeBeat("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.")
-            .needs(cornered(1), isArmed(1))
+            .needs(cornered(1, 2), isArmed(1))
             .sets_up(isDead(1))
     ] +
     ([MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
@@ -156,9 +172,9 @@ narrative_pieces = (
     ] +
     [
         MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
-            .if_not(wifeDiedRandomly)
+            .if_not(wifeDiedRandomly('any'))
             .if_not(heros_journey.ghost)
-            .sets_up(wifeDiedRandomly, heros_journey.ghost),
+            .sets_up(wifeDiedRandomly(1), heros_journey.ghost),
         MakeBeat("Wife last words become meaningful.")
             .needs(wifeDiedRandomly(1), heros_journey.theReturn)
             .sets_up(regainFaith(1), heros_journey.change),
@@ -174,10 +190,13 @@ knowPerpIsInChinatown = Concept([], "knowIsInChinatown")
 
 to_add_later = (
     [
-        NarrativePiece("You should first describe my life by how I overcame a youthful obsession " +
+        MakeBeat("You should first describe my life by how I overcame a youthful obsession " +
             "with discrete mathematics and found love with continuous values. Real beauty exists " +
-            "again within itself and does not stop at some arbitrary depth.", [], [discreteToContinuous], []),
-        NarrativePiece("Forget it Jake, it's Chinatown.", [knowPerpIsInChinatown], [story_end], []),
+            "again within itself and does not stop at some arbitrary depth.")
+            .sets_up(discreteToContinuous),
+        MakeBeat("Forget it Jake, it's Chinatown.")
+            .needs(knowPerpIsInChinatown)
+            .sets_up(story_end),
     ]
 )
 

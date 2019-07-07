@@ -63,7 +63,7 @@ class Concept:
 
     def get_parameterized(self):
         assert len(self.parameter_types) == 0, (
-             "You must pass in names for the paramters to: " + self
+             "You must pass in names for the paramters to: " + str(self)
         )
         return self()
 
@@ -85,6 +85,6 @@ class _ParameterizedConcept:
         return self
 
     def __repr__(self):
-        return "P-" + self.concept
+        return "P-" + str(self.concept)
 
 story_end = Concept([])

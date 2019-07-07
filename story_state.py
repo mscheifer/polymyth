@@ -99,12 +99,6 @@ def is_prohibited(narrative_piece, established_ideas, arguments):
             return True # One of the prohibitive concept tuples is already established
     return False
 
-def get_ideas_that_have_lead_nowhere(established_ideas, ideas_that_have_lead_to_something):
-    return (
-        idea for idea in established_ideas
-            if not idea not in ideas_that_have_lead_to_something
-    )
-
 def try_get_output_args(
     narrative_piece, established_ideas, possible_free_args, requirements_bound_args
 ):
@@ -229,12 +223,10 @@ class StoryState:
 
     def try_update_with_beat(self, narrative_piece):
 
-        for parameterized_output_concept in narrative_piece.output_concepts:
-            if parameterized_output_concept.concept is story.story_end:
+        for parameterized_concept in narrative_piece.parameterized_output_concepts:
+            if parameterized_concept.concept is story.story_end:
                 # lazily check if there's at least one that has lead nowhere
-                if next(get_ideas_that_have_lead_nowhere(
-                    self.established_ideas, self.used_ideas
-                ), None) is not None:
+                if next(self.get_ideas_that_have_lead_nowhere(), None) is not None:
                     return None
 
         ideas_beat_establishes = self.can_beat_be_used(narrative_piece)
@@ -243,3 +235,9 @@ class StoryState:
             return None
 
         return [arg for arg in (idea.arguments for idea in ideas_beat_establishes)]
+
+    def get_ideas_that_have_lead_nowhere(self):
+        return (
+            idea for idea in self.established_ideas
+                if not idea not in self.used_ideas
+        )
