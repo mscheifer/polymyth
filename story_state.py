@@ -141,7 +141,7 @@ class StoryState:
     def __init__(self, free_arguments):
         self.free_arguments = free_arguments # constant
         self.established_ideas = []
-        self.used_ideas = [] # ideas that have lead to something
+        self.used_ideas = set() # ideas that have lead to something
 
     def can_beat_be_used(self, narrative_piece):
         for requirements_bound_arguments, used_ideas in get_possible_basis_ideas(
@@ -198,7 +198,7 @@ class StoryState:
             if output_args is None:
                 continue
 
-            new_established_ideas = []
+            # Now do the update steps becuase our match was succesful
 
             for parameterized_output_concept in narrative_piece.parameterized_output_concepts:
                 output_arguments = []
@@ -207,17 +207,14 @@ class StoryState:
                     assert bound_arg is not None
                     output_arguments.append(bound_arg)
 
-                new_established_ideas.append(EstablishedIdea(
+                self.established_ideas.append(EstablishedIdea(
                     parameterized_output_concept.concept, output_arguments
                 ))
 
-            # Now do the update steps becuase our match was succesful
-            self.established_ideas.extend(new_established_ideas)
-
-            self.used_ideas.extend(used_ideas)
+            self.used_ideas.update(used_ideas)
             # end update steps
 
-            return new_established_ideas
+            return output_args
 
         return None
 
@@ -229,15 +226,10 @@ class StoryState:
                 if next(self.get_ideas_that_have_lead_nowhere(), None) is not None:
                     return None
 
-        ideas_beat_establishes = self.can_beat_be_used(narrative_piece)
-
-        if ideas_beat_establishes is None:
-            return None
-
-        return [arg for arg in (idea.arguments for idea in ideas_beat_establishes)]
+        return self.can_beat_be_used(narrative_piece)
 
     def get_ideas_that_have_lead_nowhere(self):
         return (
             idea for idea in self.established_ideas
-                if not idea not in self.used_ideas
+                if idea not in self.used_ideas
         )
