@@ -5,12 +5,14 @@
 class MakeBeat:
     def __init__(self, text):
         self.text = text
-        self.required_concepts = []
+        self.required_concept_tuples = []
         self.prohibitive_concept_tuples = []
 
-    #TODO rename to 'ok_if' and have each call be OR'd (top level) and arguments are ANDed
-    def needs(self, *required_concepts):
-        self.required_concepts = required_concepts
+    # One call to ok_if() creates a set of concepts that must all be present for this beat to be
+    # allowed. If you want to allow this beat for any of several concepts, just call ok_if()
+    # for each one.
+    def ok_if(self, *required_concepts):
+        self.required_concept_tuples.append(tuple(required_concepts))
         return self
 
     # One call to if_not() creates a set of concepts that must all be present for this beat to be
@@ -23,7 +25,7 @@ class MakeBeat:
     def sets_up(self, *output_concepts):
         return NarrativePiece(
             self.text,
-            self.required_concepts,
+            self.required_concept_tuples,
             output_concepts,
             self.prohibitive_concept_tuples
         )
@@ -32,15 +34,22 @@ class NarrativePiece:
     def __init__(
         self,
         text,
-        required_concepts,
+        required_concept_tuples,
         output_concepts,
         prohibitive_concept_tuples,
     ):
         self.text = text
 
-        self.parameterized_required_concepts = [
-            req.get_parameterized() for req in required_concepts
+        self.parameterized_required_concept_tuples = [
+            [req.get_parameterized() for req in tup]
+            for tup in required_concept_tuples
         ]
+        # No set requirements implys that it's always allowed, so we change it
+        # to one possible req of nothing.
+        if len(self.parameterized_required_concept_tuples) == 0:
+            self.parameterized_required_concept_tuples = [[]]
+
+        #TODO: should convert to tuple again here?
         self.parameterized_prohibitive_concept_tuples = [
             [prohib.get_parameterized() for prohib in tup]
             for tup in prohibitive_concept_tuples

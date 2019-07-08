@@ -52,11 +52,11 @@ def try_is_established_and_bind(parameterized_concept, idea, args):
 
 # Return arguments to parameters in the required concepts if they are
 # established by the given ideas combo
-def get_bound_args_if_establishes(narrative_piece, ideas_combo):
+def get_bound_args_if_establishes(parameterized_required_concepts, ideas_combo):
     bound_arguments = {}
 
     for parameterized_concept, idea in zip(
-        narrative_piece.parameterized_required_concepts, ideas_combo
+        parameterized_required_concepts, ideas_combo
     ):
         if not try_is_established_and_bind(
             parameterized_concept, idea, bound_arguments
@@ -75,18 +75,31 @@ def get_possible_basis_ideas(narrative_piece, established_ideas):
         random.shuffle(randomized_established_ideas)
         return randomized_established_ideas
 
-    random_ideas = [get_randomized_ideas() for _ in range(
-        len(narrative_piece.parameterized_required_concepts)
-    )]
+    # Each possible set of required concepts will become an iterator of all
+    # establishing ideas for those concepts.
 
-    combos = itertools.product(*random_ideas)
+    def get_combo_iterator(parameterized_required_concepts):
+        random_ideas = [get_randomized_ideas() for _ in range(
+            len(parameterized_required_concepts)
+        )]
 
-    return (
-        (bound_arguments, combo) for bound_arguments, combo in (
-            (get_bound_args_if_establishes(narrative_piece, combo), combo)
-            for combo in combos
-        ) if bound_arguments is not None
-    )
+        combos = itertools.product(*random_ideas)
+
+        def maybe_get_bound_args(combo):
+            return get_bound_args_if_establishes(
+                parameterized_required_concepts, combo
+            )
+
+        return (
+            (bound_arguments, combo) for bound_arguments, combo in (
+                (maybe_get_bound_args(combo), combo) for combo in combos
+            ) if bound_arguments is not None
+        )
+
+    combo_iterators = [get_combo_iterator(tup)
+        for tup in narrative_piece.parameterized_required_concept_tuples]
+
+    return itertools.chain.from_iterable(combo_iterators)
 
 def is_prohibited(narrative_piece, established_ideas, arguments):
     for prohibitive_concept_tuple in narrative_piece.parameterized_prohibitive_concept_tuples:
@@ -214,7 +227,7 @@ class StoryState:
             self.used_ideas.update(used_ideas)
             # end update steps
 
-            return output_args
+            return output_args, used_ideas
 
         return None
 

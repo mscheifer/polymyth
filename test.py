@@ -60,6 +60,7 @@ class Test(unittest.TestCase):
     def test_can_beat_be_used(self):
         concept = story.Concept([])
         concept2 = story.Concept([])
+
         beat = story.MakeBeat('a').sets_up(concept)
 
         state = story_state.StoryState(free_arguments)
@@ -67,7 +68,7 @@ class Test(unittest.TestCase):
         # A story beat with no requirements can be used even with no pre-established ideas.
         self.assertIsNotNone(state.can_beat_be_used(beat))
 
-        beatWithReq = story.MakeBeat('b').needs(concept2).sets_up(concept)
+        beatWithReq = story.MakeBeat('b').ok_if(concept2).sets_up(concept)
 
         self.assertIsNone(state.can_beat_be_used(beatWithReq))
 
@@ -98,7 +99,7 @@ class Test(unittest.TestCase):
         ]
 
         beatWithLinkedReqs = (story.MakeBeat('b')
-             .needs(linkedConceptA(0), linkedConceptB(0), linkedConceptC(0))
+             .ok_if(linkedConceptA(0), linkedConceptB(0), linkedConceptC(0))
              .sets_up(concept)
         )
 
@@ -117,7 +118,7 @@ class Test(unittest.TestCase):
         ]
 
         beat = (story.MakeBeat('b')
-             .needs(concept(0))
+             .ok_if(concept(0))
              .if_not(concept2(0))
              .sets_up(concept3)
         )
@@ -151,8 +152,26 @@ class Test(unittest.TestCase):
         ]
 
         beat = (story.MakeBeat('b')
-             .needs(concept(0), concept(1))
+             .ok_if(concept(0), concept(1))
              .sets_up(concept2())
+        )
+
+        self.assertIsNotNone(state.can_beat_be_used(beat))
+
+    def test_can_beat_be_used__alternative_requirements(self):
+        concept = story.Concept([charParam], "ca1")
+        concept2 = story.Concept([charParam], "ca2")
+        concept3 = story.Concept([charParam], "ca2")
+
+        state = story_state.StoryState(free_arguments)
+        state.established_ideas = [
+            story_state.EstablishedIdea(concept, [chars[0]]),
+        ]
+
+        beat = (story.MakeBeat('ba')
+             .ok_if(concept(0))
+             .ok_if(concept2(0))
+             .sets_up(concept3(0))
         )
 
         self.assertIsNotNone(state.can_beat_be_used(beat))

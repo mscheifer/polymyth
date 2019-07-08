@@ -66,119 +66,123 @@ narrative_pieces = (
         MakeBeat("Introduce PI")
             .if_not(storyStart)
             .sets_up(storyStart, characterIsPI(1), isInPIOffice(1)),
+
         MakeBeat("PI is protagonist")
-            .needs(characterIsPI(1))
+            .ok_if(storyStart, characterIsPI(1))
             .if_not(isProtag('any'))
             .sets_up(isProtag(1)),
 
         MakeBeat("Reads political scandal in paper")
-            .needs(isInPIOffice(0), isProtag(0))
+            .ok_if(isInPIOffice(0), isProtag(0))
             .sets_up(politicalScandal),
 
         MakeBeat("Introduce dead brother")
             .if_not(characterHasDeadBrother('any'))
             .if_not(heros_journey.ghost)
-            .needs(isProtag(0))
+            .ok_if(isProtag(0))
             .sets_up(characterHasDeadBrother(0), heros_journey.you, heros_journey.ghost),
 
         MakeBeat("Client walks in")
+            #TODO, ugh this is broken because we want it to be prohibited for ANY, not
+            # all values. I think we need the special ANY value.
             .if_not(isInPIOffice(-1), isClient(-1)) # for any other char
             .if_not(characterIsPI(1))
-            .needs(characterIsPI(0), isInPIOffice(0))
+            .ok_if(characterIsPI(0), isInPIOffice(0))
             .sets_up(isInPIOffice(1), isClient(1)),
 
         MakeBeat("Father missing case")
-            .needs(characterIsPI(0), isInPIOffice(1), isClient(1))
+            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1))
             .if_not(hasACase('any'))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
+        MakeBeat("Takes gun out of desk")
+            .ok_if(isInPIOffice(0), isProtag(0))
+            .sets_up(isArmed(0)),
+
+        MakeBeat("Has big conspiracy board with yarn and stuff")
+            .ok_if(isInPIOffice(0), isProtag(0))
+            .sets_up(isObsessive(0)),
+
         MakeBeat("Asks old boss for help")
-            .needs(hasACase(1))
+            .ok_if(hasACase(1))
             .if_not(isProtag(2))
             .if_not(isClient(2))
             .sets_up(hasGuidance(1, 2)),
 
         MakeBeat("Breaks into father's appartment.")
-            .needs(hasGuidance(1,2))
+            .ok_if(hasGuidance(1,2))
             .sets_up(inFathersAppartment(1)),
 
         MakeBeat("Finds father dead.")
-            .needs(inFathersAppartment(1))
+            .ok_if(inFathersAppartment(1))
             .sets_up(foundDeadFather(1), heros_journey.go),
 
         MakeBeat("Finds matchbox on father's body.")
-            .needs(foundDeadFather(1))
+            .ok_if(foundDeadFather(1))
             .sets_up(fatherHungOutAtSeedyBar),
 
         MakeBeat("Goes to seedy bar.")
-            .needs(fatherHungOutAtSeedyBar)
+            .ok_if(fatherHungOutAtSeedyBar)
             .sets_up(atSeedyBar),
 
         MakeBeat("Talks to mysterious woman.")
-            .needs(atSeedyBar)
+            .ok_if(atSeedyBar)
             .sets_up(talkingToMysteriousWoman),
-
-        MakeBeat("Mystery woman says dead father betrayed brother.")
-            .needs(characterHasDeadBrother(1), talkingToMysteriousWoman)
-            .sets_up(),
-
-        MakeBeat("Mystery woman says dead father had no faith.")
-            .needs(wifeDiedRandomly(1), talkingToMysteriousWoman)
-            .sets_up(),
 
         # sets up for character change at the end, this is needed to accept
         # that the mentor was a bad guy
-        MakeBeat("Mystery woman says you have to accept loss.")
-            .needs(characterHasDeadBrother(1), talkingToMysteriousWoman)
+        MakeBeat("Mystery woman says dead father betrayed his own brother and "
+            + "you have to accept loss.")
+            .ok_if(characterHasDeadBrother(1), talkingToMysteriousWoman)
             .sets_up(heros_journey.find),
 
         # sets up for character change at the end
-        MakeBeat("Mystery woman says you have to have faith.")
-            .needs(wifeDiedRandomly(1), talkingToMysteriousWoman)
+        MakeBeat("Mystery woman says dead father had no faith but you have to have faith.")
+            .ok_if(wifeDiedRandomly(1), talkingToMysteriousWoman)
             .sets_up(heros_journey.find),
 
         MakeBeat("Finds evidence his old boss did it.")
-            .needs(heros_journey.find, hasGuidance(1,2))
+            .ok_if(heros_journey.find, hasGuidance(1,2))
             .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
 
         MakeBeat("Goes to his old bosses place.")
-            .needs(foundEvidenceOfPerp(1,2))
+            .ok_if(foundEvidenceOfPerp(1,2))
             .sets_up(isAtHouse(1,2)),
 
         MakeBeat("Boss sees PI and bolts.")
-            .needs(isAtHouse(0,1), isPerp(1))
+            .ok_if(isAtHouse(0,1), isPerp(1))
             .sets_up(runsAway(1)),
 
         MakeBeat("PI chases old boss.")
-            .needs(runsAway(1))
+            .ok_if(runsAway(1), isAtHouse(2,1))
             .sets_up(chasing(1, 2)),
 
         MakeBeat("Frog 1 is here and I'm going to get him..")
-            .needs(chasing(1, 2), isObsessive(2))
+            .ok_if(chasing(1, 2), isObsessive(2))
             .sets_up(story_end),
 
         MakeBeat("Old boss gets cornered down an alley.")
-            .needs(chasing(1,2))
+            .ok_if(chasing(1,2))
             .sets_up(cornered(1,2)),
 
         MakeBeat("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.")
-            .needs(cornered(1, 2), isArmed(1))
-            .sets_up(isDead(1))
-    ] +
-    ([MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
-            .needs(isPerp(1), perpResolved(1))
-            .sets_up(story_end)
-        for perpResolved in [isDead, isArrested]
-    ] +
-    [
+            .ok_if(cornered(1, 2), isArmed(2))
+            .sets_up(isDead(1)),
+
+        MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
+            .ok_if(isPerp(1), isArrested(1))
+            .ok_if(isPerp(1), isDead(1))
+            .sets_up(story_end),
+
         MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
             .if_not(wifeDiedRandomly('any'))
             .if_not(heros_journey.ghost)
             .sets_up(wifeDiedRandomly(1), heros_journey.ghost),
+
         MakeBeat("Wife last words become meaningful.")
-            .needs(wifeDiedRandomly(1), heros_journey.theReturn)
+            .ok_if(wifeDiedRandomly(1), heros_journey.theReturn)
             .sets_up(regainFaith(1), heros_journey.change),
-    ])
+    ]
 )
 
 #TODO: concept, children's story logic.
@@ -195,7 +199,7 @@ to_add_later = (
             "again within itself and does not stop at some arbitrary depth.")
             .sets_up(discreteToContinuous),
         MakeBeat("Forget it Jake, it's Chinatown.")
-            .needs(knowPerpIsInChinatown)
+            .ok_if(knowPerpIsInChinatown)
             .sets_up(story_end),
     ]
 )
