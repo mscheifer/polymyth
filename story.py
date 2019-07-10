@@ -1,6 +1,14 @@
+import itertools
+
 # If we break the narrative down into small enough pieces, it becomes a language. We can recombine
 # the pieces to create novelty. Repeating the same building blocks does not sound repetative, just
 # like words.
+
+any1 = 'any1'
+any2 = 'any2'
+any3 = 'any3'
+
+anys = [any1, any2, any3]
 
 class MakeBeat:
     def __init__(self, text):
@@ -57,6 +65,27 @@ class NarrativePiece:
         self.parameterized_output_concepts = [
             out.get_parameterized() for out in output_concepts
         ]
+
+        all_prohib_params = set(param
+            for concept in itertools.chain.from_iterable(
+                self.parameterized_prohibitive_concept_tuples
+            )
+            for param in concept.parameters
+        )
+
+        for param in all_prohib_params:
+            assert (
+                any(
+                    param in param_output_concept.parameters
+                    for param_output_concept in self.parameterized_output_concepts
+                ) or
+                any(
+                    param in param_req_concept.parameters
+                    for param_req_concepts in self.parameterized_required_concept_tuples
+                    for param_req_concept in param_req_concepts
+                ) or
+                param in anys
+            ), "Cannot use non-any param: " + str(param) + " only in prohibited concepts"
 
     def __repr__(self):
         return self.text

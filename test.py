@@ -176,6 +176,34 @@ class Test(unittest.TestCase):
 
         self.assertIsNotNone(state.can_beat_be_used(beat))
 
+    def test_can_beat_be_used__prohibited_any(self):
+        concept = story.Concept([charParam], "ca1")
+        concept2 = story.Concept([charParam], "ca2")
+        concept3 = story.Concept([], "ca3")
+
+        state = story_state.StoryState(free_arguments)
+        state.established_ideas = [
+            # It shouldn't get confused and not look at the next idea of the
+            # same concept
+            story_state.EstablishedIdea(concept, [chars[0]]),
+            story_state.EstablishedIdea(concept, [chars[1]]),
+            story_state.EstablishedIdea(concept2, [chars[1]]),
+        ]
+
+        beat = (story.MakeBeat('ba')
+             .if_not(concept(story.any1), concept2(story.any1))
+             .sets_up(concept3)
+        )
+
+        self.assertIsNone(state.can_beat_be_used(beat))
+
+        state.established_ideas = [
+            story_state.EstablishedIdea(concept, [chars[0]]),
+            story_state.EstablishedIdea(concept2, [chars[1]]),
+        ]
+        # Should work if the ideas have different args
+        self.assertIsNotNone(state.can_beat_be_used(beat))
+
 if __name__ == '__main__':
     random.seed(1234) # for deterministic tests
     unittest.main()

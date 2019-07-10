@@ -28,12 +28,6 @@ def is_established_by(parameterized_concept, established_idea, bound_arguments):
                        # another concept in this piece
     return True
 
-def get_established_idea(established_ideas, parameterized_concept, bound_args):
-    for idea in established_ideas:
-        if is_established_by(parameterized_concept, idea, bound_args):
-            return idea
-    return None
-
 # See if the idea establishes the concept given the arguments. If some more
 # arguments need to be added then do so.
 #   - mutates args
@@ -102,14 +96,46 @@ def get_possible_basis_ideas(narrative_piece, established_ideas):
     return itertools.chain.from_iterable(combo_iterators)
 
 def is_prohibited(narrative_piece, established_ideas, arguments):
-    for prohibitive_concept_tuple in narrative_piece.parameterized_prohibitive_concept_tuples:
-        if all(
-            get_established_idea(
-                established_ideas, parameterized_prohibitive_concept, arguments
-            )
-            is not None for parameterized_prohibitive_concept in prohibitive_concept_tuple
-        ):
-            return True # One of the prohibitive concept tuples is already established
+    def is_established_by_and_bind_anys(parameterized_concept, established_idea, bound_arguments, bound_anys):
+        if established_idea.concept is not parameterized_concept.concept:
+            return False
+
+        for p, a in zip(parameterized_concept.parameters, established_idea.arguments):
+            if p in story.anys:
+                if p in bound_anys:
+                    if bound_anys.get(p) is not a:
+                        return False
+                else:
+                    bound_anys[p] = a
+            else:
+                assert p in bound_arguments
+                if bound_arguments.get(p) is not a:
+                    return False
+
+        return True
+
+    def combo_establishes_prohib_tuple(prohibitive_concept_tuple, combo):
+        bound_anys = {}
+        for concept, idea in zip(prohibitive_concept_tuple, combo):
+            if not is_established_by_and_bind_anys(
+                concept, idea, arguments, bound_anys
+            ):
+                return False
+        return True
+
+    for prohibitive_concept_tuple in (
+        narrative_piece.parameterized_prohibitive_concept_tuples
+    ):
+        ideas = [established_ideas for _ in range(
+            len(prohibitive_concept_tuple)
+        )]
+        combos = itertools.product(*ideas)
+
+        for combo in combos:
+            if combo_establishes_prohib_tuple(prohibitive_concept_tuple, combo):
+                # One of the prohibitive concept tuples is already established
+                return True
+
     return False
 
 def try_get_output_args(
@@ -171,7 +197,7 @@ class StoryState:
                     parameterized_concept.parameters,
                     parameterized_concept.concept.parameter_types
                 ):
-                    if not param in requirements_bound_arguments:
+                    if param not in requirements_bound_arguments and param not in story.anys:
                         if param in free_parameters:
                             # This can happen if the param is used in outputs
                             # more than once. We don't need to add it twice.

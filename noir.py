@@ -1,4 +1,5 @@
 from story import (
+    any1,
     Concept,
     NarrativePiece,
     MakeBeat,
@@ -69,7 +70,7 @@ narrative_pieces = (
 
         MakeBeat("PI is protagonist")
             .ok_if(storyStart, characterIsPI(1))
-            .if_not(isProtag('any'))
+            .if_not(isProtag(any1))
             .sets_up(isProtag(1)),
 
         MakeBeat("Reads political scandal in paper")
@@ -77,7 +78,7 @@ narrative_pieces = (
             .sets_up(politicalScandal),
 
         MakeBeat("Introduce dead brother")
-            .if_not(characterHasDeadBrother('any'))
+            .if_not(characterHasDeadBrother(any1))
             .if_not(heros_journey.ghost)
             .ok_if(isProtag(0))
             .sets_up(characterHasDeadBrother(0), heros_journey.you, heros_journey.ghost),
@@ -85,14 +86,14 @@ narrative_pieces = (
         MakeBeat("Client walks in")
             #TODO, ugh this is broken because we want it to be prohibited for ANY, not
             # all values. I think we need the special ANY value.
-            .if_not(isInPIOffice(-1), isClient(-1)) # for any other char
+            .if_not(isInPIOffice(any1), isClient(any1)) # for any other char
             .if_not(characterIsPI(1))
             .ok_if(characterIsPI(0), isInPIOffice(0))
             .sets_up(isInPIOffice(1), isClient(1)),
 
         MakeBeat("Father missing case")
             .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1))
-            .if_not(hasACase('any'))
+            .if_not(hasACase(any1))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
         MakeBeat("Takes gun out of desk")
@@ -175,7 +176,7 @@ narrative_pieces = (
             .sets_up(story_end),
 
         MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
-            .if_not(wifeDiedRandomly('any'))
+            .if_not(wifeDiedRandomly(any1))
             .if_not(heros_journey.ghost)
             .sets_up(wifeDiedRandomly(1), heros_journey.ghost),
 
