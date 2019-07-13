@@ -125,4 +125,4 @@ class _ParameterizedConcept:
     def __repr__(self):
         return "P-" + str(self.concept)
 
-story_end = Concept([])
+story_end = Concept([], "##END##")

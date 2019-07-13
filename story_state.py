@@ -4,6 +4,13 @@ import random
 import util
 import story
 
+def get_randomized_list(l):
+    # Randomize so stories with similar beginnings don't always take the
+    # same path
+    randomized_list = l.copy()
+    random.shuffle(randomized_list)
+    return randomized_list
+
 class EstablishedIdea:
     def __init__(self, concept, arguments):
         self.concept = concept
@@ -62,18 +69,11 @@ def get_bound_args_if_establishes(parameterized_required_concepts, ideas_combo):
 
 # Return a generator of bound arguments and used_ideas
 def get_possible_basis_ideas(narrative_piece, established_ideas):
-    def get_randomized_ideas():
-        # Randomize so stories with similar beginnings don't always take the
-        # same path
-        randomized_established_ideas = established_ideas.copy()
-        random.shuffle(randomized_established_ideas)
-        return randomized_established_ideas
-
     # Each possible set of required concepts will become an iterator of all
     # establishing ideas for those concepts.
 
     def get_combo_iterator(parameterized_required_concepts):
-        random_ideas = [get_randomized_ideas() for _ in range(
+        random_ideas = [get_randomized_list(established_ideas) for _ in range(
             len(parameterized_required_concepts)
         )]
 
@@ -90,8 +90,13 @@ def get_possible_basis_ideas(narrative_piece, established_ideas):
             ) if bound_arguments is not None
         )
 
-    combo_iterators = [get_combo_iterator(tup)
-        for tup in narrative_piece.parameterized_required_concept_tuples]
+    combo_iterators = (get_combo_iterator(tup)
+        # Randomize so we don't always bind to args in the first possiblility
+        # when they work. If all requirements could work then we should pick
+        # with equal probability.
+        for tup in get_randomized_list(
+            narrative_piece.parameterized_required_concept_tuples
+        ))
 
     return itertools.chain.from_iterable(combo_iterators)
 
@@ -176,13 +181,16 @@ def try_get_output_args(
 
     return output_args
 
+def get_ideas_that_have_lead_nowhere(established_ideas, used_ideas):
+    return (idea for idea in established_ideas if idea not in used_ideas)
+
 class StoryState:
     def __init__(self, free_arguments):
         self.free_arguments = free_arguments # constant
         self.established_ideas = []
         self.used_ideas = set() # ideas that have lead to something
 
-    def can_beat_be_used(self, narrative_piece):
+    def try_update_with_beat(self, narrative_piece):
         for requirements_bound_arguments, used_ideas in get_possible_basis_ideas(
             narrative_piece, self.established_ideas
         ):
@@ -237,6 +245,9 @@ class StoryState:
             if output_args is None:
                 continue
 
+            if not self.can_story_end(narrative_piece, used_ideas):
+                continue
+
             # Now do the update steps becuase our match was succesful
 
             for parameterized_output_concept in narrative_piece.parameterized_output_concepts:
@@ -257,18 +268,13 @@ class StoryState:
 
         return None
 
-    def try_update_with_beat(self, narrative_piece):
-
+    def can_story_end(self, narrative_piece, new_used_ideas):
         for parameterized_concept in narrative_piece.parameterized_output_concepts:
             if parameterized_concept.concept is story.story_end:
                 # lazily check if there's at least one that has lead nowhere
-                if next(self.get_ideas_that_have_lead_nowhere(), None) is not None:
-                    return None
-
-        return self.can_beat_be_used(narrative_piece)
-
-    def get_ideas_that_have_lead_nowhere(self):
-        return (
-            idea for idea in self.established_ideas
-                if idea not in self.used_ideas
-        )
+                used_ideas = set.union(self.used_ideas, set(new_used_ideas))
+                if next(get_ideas_that_have_lead_nowhere(
+                    self.established_ideas, used_ideas
+                ), None) is not None:
+                    return False
+        return True

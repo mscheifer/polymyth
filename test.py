@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
         )
         self.assertEqual(bound_params, {0:argument})
 
-    def test_can_beat_be_used(self):
+    def test_try_update_with_beat(self):
         concept = story.Concept([])
         concept2 = story.Concept([])
 
@@ -66,11 +66,11 @@ class Test(unittest.TestCase):
         state = story_state.StoryState(free_arguments)
 
         # A story beat with no requirements can be used even with no pre-established ideas.
-        self.assertIsNotNone(state.can_beat_be_used(beat))
+        self.assertIsNotNone(state.try_update_with_beat(beat))
 
         beatWithReq = story.MakeBeat('b').ok_if(concept2).sets_up(concept)
 
-        self.assertIsNone(state.can_beat_be_used(beatWithReq))
+        self.assertIsNone(state.try_update_with_beat(beatWithReq))
 
         prohibitedBeat = story.MakeBeat('c').if_not(concept2).sets_up(concept)
 
@@ -79,12 +79,12 @@ class Test(unittest.TestCase):
             story_state.EstablishedIdea(concept2, [])
         ]
 
-        self.assertIsNone(state.can_beat_be_used(prohibitedBeat))
+        self.assertIsNone(state.try_update_with_beat(prohibitedBeat))
 
         # TODO: test an exclusive and non-exclusive output concept together, that is definitely
         # broken
 
-    def test_can_beat_be_used__linked_reqs(self):
+    def test_try_update_with_beat__linked_reqs(self):
         concept = story.Concept([])
 
         linkedConceptA = story.Concept([charParam])
@@ -103,9 +103,9 @@ class Test(unittest.TestCase):
              .sets_up(concept)
         )
 
-        self.assertIsNotNone(state.can_beat_be_used(beatWithLinkedReqs))
+        self.assertIsNotNone(state.try_update_with_beat(beatWithLinkedReqs))
 
-    def test_can_beat_be_used__multiple_possilbe_bound_args(self):
+    def test_try_update_with_beat__multiple_possilbe_bound_args(self):
         concept = story.Concept([charParam], "c1")
         concept2 = story.Concept([charParam], "c2")
         concept3 = story.Concept([], "c3")
@@ -123,9 +123,9 @@ class Test(unittest.TestCase):
              .sets_up(concept3)
         )
         
-        self.assertIsNotNone(state.can_beat_be_used(beat))
+        self.assertIsNotNone(state.try_update_with_beat(beat))
 
-    def test_can_beat_be_used__prohibited_linked_to_output(self):
+    def test_try_update_with_beat__prohibited_linked_to_output(self):
         concept = story.Concept([charParam], "c1")
         concept2 = story.Concept([charParam], "c2")
 
@@ -139,9 +139,9 @@ class Test(unittest.TestCase):
              .sets_up(concept2(0))
         )
 
-        self.assertIsNotNone(state.can_beat_be_used(beat))
+        self.assertIsNotNone(state.try_update_with_beat(beat))
 
-    def test_can_beat_be_used__same_requirement_different_args(self):
+    def test_try_update_with_beat__same_requirement_different_args(self):
         concept = story.Concept([charParam], "c1")
         concept2 = story.Concept([], "c2")
 
@@ -156,9 +156,9 @@ class Test(unittest.TestCase):
              .sets_up(concept2())
         )
 
-        self.assertIsNotNone(state.can_beat_be_used(beat))
+        self.assertIsNotNone(state.try_update_with_beat(beat))
 
-    def test_can_beat_be_used__alternative_requirements(self):
+    def test_try_update_with_beat__alternative_requirements(self):
         concept = story.Concept([charParam], "ca1")
         concept2 = story.Concept([charParam], "ca2")
         concept3 = story.Concept([charParam], "ca2")
@@ -174,9 +174,9 @@ class Test(unittest.TestCase):
              .sets_up(concept3(0))
         )
 
-        self.assertIsNotNone(state.can_beat_be_used(beat))
+        self.assertIsNotNone(state.try_update_with_beat(beat))
 
-    def test_can_beat_be_used__prohibited_any(self):
+    def test_try_update_with_beat__prohibited_any(self):
         concept = story.Concept([charParam], "ca1")
         concept2 = story.Concept([charParam], "ca2")
         concept3 = story.Concept([], "ca3")
@@ -195,14 +195,14 @@ class Test(unittest.TestCase):
              .sets_up(concept3)
         )
 
-        self.assertIsNone(state.can_beat_be_used(beat))
+        self.assertIsNone(state.try_update_with_beat(beat))
 
         state.established_ideas = [
             story_state.EstablishedIdea(concept, [chars[0]]),
             story_state.EstablishedIdea(concept2, [chars[1]]),
         ]
         # Should work if the ideas have different args
-        self.assertIsNotNone(state.can_beat_be_used(beat))
+        self.assertIsNotNone(state.try_update_with_beat(beat))
 
 if __name__ == '__main__':
     random.seed(1234) # for deterministic tests

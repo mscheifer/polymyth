@@ -93,7 +93,7 @@ narrative_pieces = (
             .sets_up(isInPIOffice(1), isClient(1)),
 
         MakeBeat("Father missing case")
-            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1))
+            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
             .if_not(hasACase(any1))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
@@ -103,11 +103,11 @@ narrative_pieces = (
 
         MakeBeat("Has big conspiracy board with yarn and stuff")
             .if_not(hasGuidance(0, any1))
-            .ok_if(isInPIOffice(0), isProtag(0), hasACase(0))
+            .ok_if(isInPIOffice(0), isProtag(0), hasACase(0), heros_journey.need)
             .sets_up(isObsessive(0)),
 
         MakeBeat("Asks old boss for help")
-            .ok_if(hasACase(1))
+            .ok_if(hasACase(1), heros_journey.need)
             .if_not(isObsessive(1)) # because leads to contradictory endoings
             .if_not(isProtag(2))
             .if_not(isClient(2))
@@ -124,7 +124,7 @@ narrative_pieces = (
             .sets_up(foundDeadFather(1), heros_journey.go),
 
         MakeBeat("Finds matchbox on father's body.")
-            .ok_if(foundDeadFather(1))
+            .ok_if(foundDeadFather(1), heros_journey.go)
             .sets_up(fatherHungOutAtSeedyBar),
 
         MakeBeat("Goes to seedy bar.")
@@ -161,7 +161,7 @@ narrative_pieces = (
             .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
 
         MakeBeat("Goes to perps place.")
-            .ok_if(foundEvidenceOfPerp(1,2))
+            .ok_if(foundEvidenceOfPerp(1,2), heros_journey.take)
             .sets_up(isAtHouse(1,2)),
 
         MakeBeat("Perp sees PI and bolts.")
