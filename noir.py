@@ -26,7 +26,7 @@ inFathersAppartment = Concept([charParam], "inFathersAppartment")
 # 1st parameter is the detective
 foundDeadFather = Concept([charParam], "foundDeadFather")
 # 1st parameter is the detective, 2nd param is the perp
-foundEvidenceOfPerp = Concept([charParam, charParam], "foundEvidenceOfPerp")
+foundEvidenceOfPerp = Concept([charParam, charParam], "foundEvidenceOfPerp", is_exclusive=True)
 # 1st parameter is the detective, 2nd param is the perp
 isAtHouse = Concept([charParam, charParam], "isAtHouse")
 # 1st parameter is the perp
@@ -61,6 +61,7 @@ wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
 regainFaith = Concept([charParam], "regainFaith")
 
 politicalScandal = Concept([], "politicalScandal")
+foundMotive = Concept([], "foundMotive")
 
 narrative_pieces = (
     [
@@ -101,17 +102,21 @@ narrative_pieces = (
             .sets_up(isArmed(0)),
 
         MakeBeat("Has big conspiracy board with yarn and stuff")
-            .ok_if(isInPIOffice(0), isProtag(0))
+            .if_not(hasGuidance(0, any1))
+            .ok_if(isInPIOffice(0), isProtag(0), hasACase(0))
             .sets_up(isObsessive(0)),
 
         MakeBeat("Asks old boss for help")
             .ok_if(hasACase(1))
+            .if_not(isObsessive(1)) # because leads to contradictory endoings
             .if_not(isProtag(2))
             .if_not(isClient(2))
+            .if_not(hasGuidance(1,any1))
             .sets_up(hasGuidance(1, 2)),
 
         MakeBeat("Breaks into father's appartment.")
-            .ok_if(hasGuidance(1,2))
+            .ok_if(isObsessive(1), caseOfMissingFather(1))
+            .ok_if(hasGuidance(1,2), caseOfMissingFather(1))
             .sets_up(inFathersAppartment(1)),
 
         MakeBeat("Finds father dead.")
@@ -142,19 +147,28 @@ narrative_pieces = (
             .ok_if(wifeDiedRandomly(1), talkingToMysteriousWoman)
             .sets_up(heros_journey.find),
 
-        MakeBeat("Finds evidence his old boss did it.")
-            .ok_if(heros_journey.find, hasGuidance(1,2))
+        MakeBeat("Overhears that dead father was involved in scandal.")
+            .ok_if(heros_journey.find, politicalScandal)
+            .sets_up(foundMotive),
+
+        MakeBeat("Finds evidence criminal mastermind did it.")
+            .ok_if(foundMotive, isObsessive(1))
             .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
 
-        MakeBeat("Goes to his old bosses place.")
+        # TODO: need to expand on this
+        MakeBeat("Finds evidence his old boss did it.")
+            .ok_if(foundMotive, hasGuidance(1,2))
+            .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
+
+        MakeBeat("Goes to perps place.")
             .ok_if(foundEvidenceOfPerp(1,2))
             .sets_up(isAtHouse(1,2)),
 
-        MakeBeat("Boss sees PI and bolts.")
+        MakeBeat("Perp sees PI and bolts.")
             .ok_if(isAtHouse(0,1), isPerp(1))
             .sets_up(runsAway(1)),
 
-        MakeBeat("PI chases old boss.")
+        MakeBeat("PI chases perp.")
             .ok_if(runsAway(1), isAtHouse(2,1))
             .sets_up(chasing(1, 2)),
 
@@ -162,11 +176,11 @@ narrative_pieces = (
             .ok_if(chasing(1, 2), isObsessive(2))
             .sets_up(story_end),
 
-        MakeBeat("Old boss gets cornered down an alley.")
+        MakeBeat("Perp gets cornered down an alley.")
             .ok_if(chasing(1,2))
             .sets_up(cornered(1,2)),
 
-        MakeBeat("Old boss pulls a gun. Fires on our hero and misses. PI kills old boss.")
+        MakeBeat("Perp pulls a gun. Fires on our hero and misses. PI kills perp.")
             .ok_if(cornered(1, 2), isArmed(2))
             .sets_up(isDead(1)),
 
