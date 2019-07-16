@@ -170,13 +170,18 @@ def try_get_output_args(
         # We don't allow selecting the same arg twice if the concept is exclusive
         return None
 
-    # We don't want to establish the same idea twice otherwise the story scene will seem
-    # superflous and redundant
-    if any(is_established_by(parameterized_output_concept, idea, output_args)
+    # We don't want to establish the same ideas twice otherwise the story beat
+    # will seem superflous. This functionality is redundant with prohibited
+    # concepts but we would want this on every beat so it is added here for
+    # convienence.
+    if all(
+        any(
+            is_established_by(parameterized_output_concept, idea, output_args)
             for idea in established_ideas
-            for parameterized_output_concept in narrative_piece.parameterized_output_concepts
-        ):
-        # we have already established this idea so skip to the next possible free args
+        )
+        for parameterized_output_concept in narrative_piece.parameterized_output_concepts
+    ):
+        # we have already established these ideas so fail for these args
         return None
 
     return output_args
