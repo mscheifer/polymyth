@@ -93,11 +93,9 @@ narrative_pieces = (
             .sets_up(characterHasDeadBrother(0), heros_journey.you, heros_journey.ghost),
 
         MakeBeat("Client walks in")
-            #TODO, ugh this is broken because we want it to be prohibited for ANY, not
-            # all values. I think we need the special ANY value.
             .if_not(isInPIOffice(any1), isClient(any1)) # for any other char
             .if_not(characterIsPI(1))
-            .if_not(hasACase(any1))
+            .if_not(hasACase(0))
             .ok_if(characterIsPI(0), isInPIOffice(0))
             .sets_up(isInPIOffice(1), isClient(1)),
 
@@ -111,7 +109,7 @@ narrative_pieces = (
 
         MakeBeat("Father missing case")
             .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
-            .if_not(hasACase(any1))
+            .if_not(hasACase(0))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
         MakeBeat("Takes gun out of desk")
