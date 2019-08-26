@@ -46,24 +46,22 @@ isProtag = Concept([charParam], "isProtag")
 isCreepy = Concept([charParam], "isCreepy")
 isPerp = Concept([charParam], "isPerp")
 isClient = Concept([charParam], "isClient")
+isObsessive = Concept([charParam], "isObessive")
 
+wentHome = Concept([charParam], "wentHome")
+enteredPIOffice = Concept([charParam], "enteredPIOffice")
+died = Concept([charParam], "died")
+gotArrested = Concept([charParam], "gotArrested")
+gotAGun = Concept([charParam], "gotAGun")
 protagGotShot = Concept([], "protagGotShot")
-
-isHome = Concept([charParam], "isHome")
-isInPIOffice = Concept([charParam], "isInPIOffice")
-isDead = Concept([charParam], "isDead")
-isArrested = Concept([charParam], "isArrested")
-isArmed = Concept([charParam], "isArmed")
 
 kickedOutClient = Concept([], "kickedOutClient")
 piGotRobbed = Concept([], "piGotRobbed")
-burglarsHungOutAtBar = Concept([], "burglarsHungOutAtSeedyBar")
 
-fatherHungOutAtBar = Concept([], "fatherHungOutAtSeedyBar")
-atSeedyBar = Concept([], "atSeedyBar")
-talkingToMysteriousWoman = Concept([], "talkingToMysteriousWoman")
-
-isObsessive = Concept([charParam], "isObessive")
+burglarsHungOutAtBar = Concept([], "burglarsHungOutAtBar")
+fatherHungOutAtBar = Concept([], "fatherHungOutAtBar")
+wentToSeedyBar = Concept([], "wentToSeedyBar")
+talkedToMysteriousWoman = Concept([], "talkedToMysteriousWoman")
 
 wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
 regainFaith = Concept([charParam], "regainFaith")
@@ -75,7 +73,7 @@ narrative_pieces = (
     [
         MakeBeat("Introduce PI")
             .if_not(storyStart)
-            .sets_up(storyStart, characterIsPI(1), isInPIOffice(1)),
+            .sets_up(storyStart, characterIsPI(1), enteredPIOffice(1)),
 
         MakeBeat("PI is protagonist")
             .ok_if(storyStart, characterIsPI(1))
@@ -83,7 +81,7 @@ narrative_pieces = (
             .sets_up(isProtag(1)),
 
         MakeBeat("Reads political scandal in paper")
-            .ok_if(isInPIOffice(0), isProtag(0))
+            .ok_if(enteredPIOffice(0), isProtag(0))
             .sets_up(politicalScandal),
 
         MakeBeat("Introduce dead brother")
@@ -93,32 +91,33 @@ narrative_pieces = (
             .sets_up(characterHasDeadBrother(0), heros_journey.you, heros_journey.ghost),
 
         MakeBeat("Client walks in")
-            .if_not(isInPIOffice(any1), isClient(any1)) # for any other char
+            .if_not(enteredPIOffice(any1), isClient(any1)) # for any other char
             .if_not(characterIsPI(1))
             .if_not(hasACase(0))
-            .ok_if(characterIsPI(0), isInPIOffice(0))
-            .sets_up(isInPIOffice(1), isClient(1)),
+            .ok_if(characterIsPI(0), enteredPIOffice(0))
+            .sets_up(enteredPIOffice(1), isClient(1)),
 
         MakeBeat("PI tells client they love them. Client goes home. PI goes home")
-            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
-            .sets_up(isCreepy(0), isHome(0), heros_journey.need),
+            .ok_if(characterIsPI(0), enteredPIOffice(1), isClient(1), heros_journey.ghost)
+            .sets_up(isCreepy(0), wentHome(0), heros_journey.need),
 
         MakeBeat("Yells at client to get out. Goes home.")
-            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
-            .sets_up(kickedOutClient, isHome(0), heros_journey.need),
+            .ok_if(characterIsPI(0), enteredPIOffice(1), isClient(1), heros_journey.ghost)
+            .sets_up(kickedOutClient(0,1), wentHome(0), heros_journey.need),
 
         MakeBeat("Father missing case")
-            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
+            .ok_if(characterIsPI(0), enteredPIOffice(1), isClient(1), heros_journey.ghost)
+            .if_not(kickedOutClient(0,1))
             .if_not(hasACase(0))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
         MakeBeat("Takes gun out of desk")
-            .ok_if(isInPIOffice(0), isProtag(0))
-            .sets_up(isArmed(0)),
+            .ok_if(enteredPIOffice(0), isProtag(0))
+            .sets_up(gotAGun(0)),
 
         MakeBeat("Someone robs PI")
             .if_not(hasACase(0))
-            .ok_if(characterIsPI(0), isHome(0))
+            .ok_if(characterIsPI(0), wentHome(0))
             .sets_up(piGotRobbed, hasACase(0)),
 
         MakeBeat("Finds matchbox from burglars")
@@ -127,7 +126,7 @@ narrative_pieces = (
 
         MakeBeat("Has big conspiracy board with yarn and stuff")
             .if_not(hasGuidance(0, any1))
-            .ok_if(isInPIOffice(0), isProtag(0), hasACase(0), heros_journey.need)
+            .ok_if(enteredPIOffice(0), isProtag(0), hasACase(0), heros_journey.need)
             .sets_up(isObsessive(0)),
 
         MakeBeat("Asks old boss for help")
@@ -154,26 +153,26 @@ narrative_pieces = (
         MakeBeat("Goes to seedy bar.")
             .ok_if(fatherHungOutAtBar)
             .ok_if(burglarsHungOutAtBar)
-            .sets_up(atSeedyBar),
+            .sets_up(wentToSeedyBar),
 
         MakeBeat("Listens to nightclub singer. Realizes it's a coded message")
-            .ok_if(atSeedyBar)
+            .ok_if(wentToSeedyBar)
             .sets_up(secretMessageSinger),
 
         MakeBeat("Talks to mysterious woman.")
-            .ok_if(atSeedyBar)
-            .sets_up(talkingToMysteriousWoman),
+            .ok_if(wentToSeedyBar)
+            .sets_up(talkedToMysteriousWoman),
 
         # sets up for character change at the end, this is needed to accept
         # that the mentor was a bad guy
         MakeBeat("Mystery woman says dead father betrayed his own brother and "
             + "you have to accept loss.")
-            .ok_if(characterHasDeadBrother(1), talkingToMysteriousWoman)
+            .ok_if(characterHasDeadBrother(1), talkedToMysteriousWoman)
             .sets_up(heros_journey.find),
 
         # sets up for character change at the end
         MakeBeat("Mystery woman says dead father had no faith but you have to have faith.")
-            .ok_if(wifeDiedRandomly(1), talkingToMysteriousWoman, caseOfMissingFather(1))
+            .ok_if(wifeDiedRandomly(1), talkedToMysteriousWoman, caseOfMissingFather(1))
             .sets_up(heros_journey.find),
 
         # TODO: follow up with watching them perform a ritual that fails.
@@ -208,7 +207,7 @@ narrative_pieces = (
             .sets_up(chasing(1, 2)),
 
         MakeBeat("PI is shot in shoulder by perp while running")
-            .ok_if(chasing(1, 2), isArmed(2), isProtag(2))
+            .ok_if(chasing(1, 2), gotAGun(2), isProtag(2))
             .sets_up(protagGotShot, heros_journey.theReturn),
 
         MakeBeat("Frog 1 is here and I'm going to get him..")
@@ -221,16 +220,16 @@ narrative_pieces = (
             .sets_up(cornered(1,2)),
 
         MakeBeat("Perp pulls a gun. Fires on our hero and misses. PI kills perp.")
-            .ok_if(cornered(1, 2), isArmed(2))
-            .sets_up(isDead(1)),
+            .ok_if(cornered(1, 2), gotAGun(2))
+            .sets_up(died(1)),
 
         MakeBeat("Protag throws gun away")
-            .ok_if(protagGotShot, isArmed(1), isProtag(1))
+            .ok_if(protagGotShot, gotAGun(1), isProtag(1))
             .sets_up(heros_journey.change),
 
         MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
-            .ok_if(isPerp(1), isArrested(1), heros_journey.change)
-            .ok_if(isPerp(1), isDead(1), heros_journey.change)
+            .ok_if(isPerp(1), gotArrested(1), heros_journey.change)
+            .ok_if(isPerp(1), died(1), heros_journey.change)
             .sets_up(story_end),
 
         MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
