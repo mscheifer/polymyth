@@ -55,7 +55,7 @@ gotArrested = Concept([charParam], "gotArrested")
 gotAGun = Concept([charParam], "gotAGun")
 protagGotShot = Concept([], "protagGotShot")
 
-kickedOutClient = Concept([], "kickedOutClient")
+kickedOutClient = Concept([charParam, charParam], "kickedOutClient")
 piGotRobbed = Concept([], "piGotRobbed")
 
 burglarsHungOutAtBar = Concept([], "burglarsHungOutAtBar")
@@ -67,6 +67,8 @@ wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
 regainFaith = Concept([charParam], "regainFaith")
 
 politicalScandal = Concept([], "politicalScandal")
+satanicCult = Concept([], "satanicCult")
+secretMessageSinger = Concept([], "secretMessageSinger")
 foundMotive = Concept([], "foundMotive")
 
 narrative_pieces = (
