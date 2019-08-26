@@ -43,15 +43,23 @@ closure = Concept([charParam], "closure")
 storyStart = Concept([], "##start##")
 
 isProtag = Concept([charParam], "isProtag")
+isCreepy = Concept([charParam], "isCreepy")
 isPerp = Concept([charParam], "isPerp")
 isClient = Concept([charParam], "isClient")
 
+protagGotShot = Concept([], "protagGotShot")
+
+isHome = Concept([charParam], "isHome")
 isInPIOffice = Concept([charParam], "isInPIOffice")
 isDead = Concept([charParam], "isDead")
 isArrested = Concept([charParam], "isArrested")
 isArmed = Concept([charParam], "isArmed")
 
-fatherHungOutAtSeedyBar = Concept([], "fatherHungOutAtSeedyBar")
+kickedOutClient = Concept([], "kickedOutClient")
+piGotRobbed = Concept([], "piGotRobbed")
+burglarsHungOutAtBar = Concept([], "burglarsHungOutAtSeedyBar")
+
+fatherHungOutAtBar = Concept([], "fatherHungOutAtSeedyBar")
 atSeedyBar = Concept([], "atSeedyBar")
 talkingToMysteriousWoman = Concept([], "talkingToMysteriousWoman")
 
@@ -89,8 +97,17 @@ narrative_pieces = (
             # all values. I think we need the special ANY value.
             .if_not(isInPIOffice(any1), isClient(any1)) # for any other char
             .if_not(characterIsPI(1))
+            .if_not(hasACase(any1))
             .ok_if(characterIsPI(0), isInPIOffice(0))
             .sets_up(isInPIOffice(1), isClient(1)),
+
+        MakeBeat("PI tells client they love them. Client goes home. PI goes home")
+            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
+            .sets_up(isCreepy(0), isHome(0), heros_journey.need),
+
+        MakeBeat("Yells at client to get out. Goes home.")
+            .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
+            .sets_up(kickedOutClient, isHome(0), heros_journey.need),
 
         MakeBeat("Father missing case")
             .ok_if(characterIsPI(0), isInPIOffice(1), isClient(1), heros_journey.ghost)
@@ -100,6 +117,15 @@ narrative_pieces = (
         MakeBeat("Takes gun out of desk")
             .ok_if(isInPIOffice(0), isProtag(0))
             .sets_up(isArmed(0)),
+
+        MakeBeat("Someone robs PI")
+            .if_not(hasACase(0))
+            .ok_if(characterIsPI(0), isHome(0))
+            .sets_up(piGotRobbed, hasACase(0)),
+
+        MakeBeat("Finds matchbox from burglars")
+            .ok_if(piGotRobbed)
+            .sets_up(burglarsHungOutAtBar, heros_journey.go),
 
         MakeBeat("Has big conspiracy board with yarn and stuff")
             .if_not(hasGuidance(0, any1))
@@ -125,11 +151,16 @@ narrative_pieces = (
 
         MakeBeat("Finds matchbox on father's body.")
             .ok_if(foundDeadFather(1), heros_journey.go)
-            .sets_up(fatherHungOutAtSeedyBar),
+            .sets_up(fatherHungOutAtBar),
 
         MakeBeat("Goes to seedy bar.")
-            .ok_if(fatherHungOutAtSeedyBar)
+            .ok_if(fatherHungOutAtBar)
+            .ok_if(burglarsHungOutAtBar)
             .sets_up(atSeedyBar),
+
+        MakeBeat("Listens to nightclub singer. Realizes it's a coded message")
+            .ok_if(atSeedyBar)
+            .sets_up(secretMessageSinger),
 
         MakeBeat("Talks to mysterious woman.")
             .ok_if(atSeedyBar)
@@ -144,11 +175,17 @@ narrative_pieces = (
 
         # sets up for character change at the end
         MakeBeat("Mystery woman says dead father had no faith but you have to have faith.")
-            .ok_if(wifeDiedRandomly(1), talkingToMysteriousWoman)
+            .ok_if(wifeDiedRandomly(1), talkingToMysteriousWoman, caseOfMissingFather(1))
             .sets_up(heros_journey.find),
 
+        # TODO: follow up with watching them perform a ritual that fails.
+        # TODO: if supernatural established then maybe could be real
+        MakeBeat("Finds out that dead father was in satanic cult.")
+            .ok_if(heros_journey.find, caseOfMissingFather(1))
+            .sets_up(foundMotive, satanicCult),
+
         MakeBeat("Overhears that dead father was involved in scandal.")
-            .ok_if(heros_journey.find, politicalScandal)
+            .ok_if(heros_journey.find, politicalScandal, caseOfMissingFather(1))
             .sets_up(foundMotive),
 
         MakeBeat("Finds evidence criminal mastermind did it.")
@@ -172,11 +209,16 @@ narrative_pieces = (
             .ok_if(runsAway(1), isAtHouse(2,1))
             .sets_up(chasing(1, 2)),
 
+        MakeBeat("PI is shot in shoulder by perp while running")
+            .ok_if(chasing(1, 2), isArmed(2), isProtag(2))
+            .sets_up(protagGotShot, heros_journey.theReturn),
+
         MakeBeat("Frog 1 is here and I'm going to get him..")
             .ok_if(chasing(1, 2), isObsessive(2))
             .sets_up(story_end),
 
         MakeBeat("Perp gets cornered down an alley.")
+            .if_not(isObsessive(2))
             .ok_if(chasing(1,2))
             .sets_up(cornered(1,2)),
 
@@ -184,9 +226,13 @@ narrative_pieces = (
             .ok_if(cornered(1, 2), isArmed(2))
             .sets_up(isDead(1)),
 
+        MakeBeat("Protag throws gun away")
+            .ok_if(protagGotShot, isArmed(1), isProtag(1))
+            .sets_up(heros_journey.change),
+
         MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
-            .ok_if(isPerp(1), isArrested(1))
-            .ok_if(isPerp(1), isDead(1))
+            .ok_if(isPerp(1), isArrested(1), heros_journey.change)
+            .ok_if(isPerp(1), isDead(1), heros_journey.change)
             .sets_up(story_end),
 
         MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
