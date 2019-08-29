@@ -22,26 +22,28 @@ class Test(unittest.TestCase):
         concept = story.Concept([])
         concept2 = story.Concept([])
         idea = story_state.EstablishedIdea(concept, (), ())
+        ideas = {idea.get_key(): idea}
 
         # Idea of concept establishes it
-        self.assertTrue(story_state.is_established_by(concept(), idea, {}))
+        self.assertTrue(story_state.is_established_by(concept(), ideas, {}))
         # Idea of different concept does not
-        self.assertFalse(story_state.is_established_by(concept2(), idea, {}))
+        self.assertFalse(story_state.is_established_by(concept2(), ideas, {}))
 
         argument = 'woo'
 
         concept_with_param = story.Concept(['blah'])
         idea_with_arg = story_state.EstablishedIdea(concept_with_param, (argument,), ())
+        ideas_with_arg = {idea_with_arg.get_key(): idea_with_arg}
 
         # In a context where the parameter is bound, idea of concept with the same parameter
         # establishes the concept.
         self.assertTrue(story_state.is_established_by(
-            concept_with_param(0), idea_with_arg, { 0:argument }
+            concept_with_param(0), ideas_with_arg, { 0:argument }
         ))
         # In a context where the parameter is bound, idea of concept with a different parameter
         # does not establish the concept.
         self.assertFalse(story_state.is_established_by(
-            concept_with_param(0), idea_with_arg, { 0:'yoyoyo' }
+            concept_with_param(0), ideas_with_arg, { 0:'yoyoyo' }
         ))
 
     def test_try_is_established_and_bind(self):

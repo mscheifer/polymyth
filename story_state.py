@@ -1,3 +1,4 @@
+import collections
 import itertools
 import random
 
@@ -33,28 +34,37 @@ class EstablishedIdea:
     def get_key(self):
         return (self.concept, self.key_arguments)
 
-# is the required concept understood from the given established idea and
+# is the required concept understood from the given established ideas map and
 # arguments
-def is_established_by(parameterized_concept, idea, bound_arguments):
-    if idea.concept is not parameterized_concept.concept:
-        return False
-
-    all_concept_arg_pairs = itertools.chain(
-        zip(parameterized_concept.key_parameters, idea.key_arguments),
-        zip(parameterized_concept.value_parameters, idea.value_arguments)
+def is_established_by(parameterized_concept, ideas, bound_arguments):
+    key = (
+        parameterized_concept.concept,
+        tuple(
+            bound_arguments.get(p) for p in parameterized_concept.key_parameters
+        )
     )
 
-    for p, a in all_concept_arg_pairs:
+    if key not in ideas:
+        return False
+
+    idea = ideas.get(key)
+
+    value_arg_pairs = zip(
+        parameterized_concept.value_parameters, idea.value_arguments
+    )
+
+    for p, a in value_arg_pairs:
         assert p in bound_arguments
         if bound_arguments.get(p) is not a:
-            return False # This established idea has this same concept but for a
-                       # different argument that we have already matched from
-                       # another concept in this piece
+            return False # This established idea has this same concept and key 
+                # arguments but for a different set of value argument that we
+                # have already stored from another concept with this key
     return True
 
 # See if the idea establishes the concept given the arguments. If some more
 # arguments need to be added then do so.
 #   - mutates args
+# TODO: is it possible to speed this one up?
 def try_is_established_and_bind(parameterized_concept, idea, args):
     if idea.concept is not parameterized_concept.concept:
         return False
@@ -95,9 +105,16 @@ def get_possible_basis_ideas(narrative_piece, established_ideas):
     # establishing ideas for those concepts.
 
     def get_combo_iterator(parameterized_required_concepts):
+        filtered_ideas_per_req = collections.defaultdict(list)
+
+        for idea in established_ideas.values():
+            for req in parameterized_required_concepts:
+                if idea.concept == req.concept:
+                    filtered_ideas_per_req[req].append(idea)
+
         random_ideas = [
-            get_randomized_list(established_ideas.values())
-            for _ in range(len(parameterized_required_concepts))
+            get_randomized_list(filtered_ideas_per_req[req])
+            for req in parameterized_required_concepts
         ]
 
         combos = itertools.product(*random_ideas)
@@ -204,12 +221,9 @@ def try_get_output_args(
     # will seem superflous. This functionality is redundant with prohibited
     # concepts but we would want this on every beat so it is added here for
     # convienence.
-    # TODO: does it matter that we can re-establish an old value for the same
-    # key if it was overwirtten?
     if all(
-        any(
-            is_established_by(parameterized_output_concept, idea, output_args)
-            for idea in established_ideas.values()
+        is_established_by(
+            parameterized_output_concept, established_ideas, output_args
         )
         for parameterized_output_concept in narrative_piece.parameterized_output_concepts
     ):
