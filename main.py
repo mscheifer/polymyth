@@ -36,7 +36,7 @@ if __name__ == '__main__':
                     stillTelling = False
 
     for unused_idea in story_state.get_ideas_that_have_lead_nowhere(
-        state.established_ideas, state.used_ideas
+        state.established_ideas.values(), state.used_ideas
     ):
         if unused_idea.concept is not story.story_end:
             print("error: unused idea -", unused_idea)
