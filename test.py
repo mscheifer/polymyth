@@ -21,7 +21,7 @@ class Test(unittest.TestCase):
     def test_is_established_by(self):
         concept = story.Concept([])
         concept2 = story.Concept([])
-        idea = story_state.EstablishedIdea(concept, [])
+        idea = story_state.EstablishedIdea(concept, (), ())
 
         # Idea of concept establishes it
         self.assertTrue(story_state.is_established_by(concept(), idea, {}))
@@ -31,7 +31,7 @@ class Test(unittest.TestCase):
         argument = 'woo'
 
         concept_with_param = story.Concept(['blah'])
-        idea_with_arg = story_state.EstablishedIdea(concept_with_param, [argument])
+        idea_with_arg = story_state.EstablishedIdea(concept_with_param, (argument,), ())
 
         # In a context where the parameter is bound, idea of concept with the same parameter
         # establishes the concept.
@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
         argument = 'woo'
 
         concept_with_param = story.Concept(['blah'])
-        idea_with_arg = story_state.EstablishedIdea(concept_with_param, [argument])
+        idea_with_arg = story_state.EstablishedIdea(concept_with_param, (argument,), ())
         # In a context where the parameter is free, idea of concept with a parameter establishes
         # the concept (and the parameter should be bound afterwards)
         bound_params = {}
@@ -75,9 +75,8 @@ class Test(unittest.TestCase):
         prohibitedBeat = story.MakeBeat('c').if_not(concept2).sets_up(concept)
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            story_state.EstablishedIdea(concept2, [])
-        ]
+        idea = story_state.EstablishedIdea(concept2, (), ())
+        state.established_ideas[idea.get_key()] = idea
 
         self.assertIsNone(state.try_update_with_beat(prohibitedBeat))
 
@@ -92,11 +91,12 @@ class Test(unittest.TestCase):
         linkedConceptC = story.Concept([charParam])
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            story_state.EstablishedIdea(linkedConceptA, [chars[0]]),
-            story_state.EstablishedIdea(linkedConceptB, [chars[0]]),
-            story_state.EstablishedIdea(linkedConceptC, [chars[0]]),
-        ]
+        idea1 = story_state.EstablishedIdea(linkedConceptA, (chars[0],), ())
+        idea2 = story_state.EstablishedIdea(linkedConceptB, (chars[0],), ())
+        idea3 = story_state.EstablishedIdea(linkedConceptC, (chars[0],), ())
+        state.established_ideas[idea1.get_key()] = idea1
+        state.established_ideas[idea2.get_key()] = idea2
+        state.established_ideas[idea3.get_key()] = idea3
 
         beatWithLinkedReqs = (story.MakeBeat('b')
              .ok_if(linkedConceptA(0), linkedConceptB(0), linkedConceptC(0))
@@ -111,11 +111,12 @@ class Test(unittest.TestCase):
         concept3 = story.Concept([], "c3")
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            story_state.EstablishedIdea(concept, [chars[0]]),
-            story_state.EstablishedIdea(concept, [chars[1]]),
-            story_state.EstablishedIdea(concept2, [chars[0]]),
-        ]
+        idea1 = story_state.EstablishedIdea(concept, (chars[0],), ())
+        idea2 = story_state.EstablishedIdea(concept, (chars[1],), ())
+        idea3 = story_state.EstablishedIdea(concept2, (chars[0],), ())
+        state.established_ideas[idea1.get_key()] = idea1
+        state.established_ideas[idea2.get_key()] = idea2
+        state.established_ideas[idea3.get_key()] = idea3
 
         beat = (story.MakeBeat('b')
              .ok_if(concept(0))
@@ -130,9 +131,8 @@ class Test(unittest.TestCase):
         concept2 = story.Concept([charParam], "c2")
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            story_state.EstablishedIdea(concept, [chars[0]]),
-        ]
+        idea = story_state.EstablishedIdea(concept, (chars[0],), ())
+        state.established_ideas[idea.get_key()] = idea
 
         beat = (story.MakeBeat('b')
              .if_not(concept(0))
@@ -146,10 +146,10 @@ class Test(unittest.TestCase):
         concept2 = story.Concept([], "c2")
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            story_state.EstablishedIdea(concept, [chars[0]]),
-            story_state.EstablishedIdea(concept, [chars[1]]),
-        ]
+        idea1 = story_state.EstablishedIdea(concept, (chars[0],), ())
+        idea2 = story_state.EstablishedIdea(concept, (chars[1],), ())
+        state.established_ideas[idea1.get_key()] = idea1
+        state.established_ideas[idea2.get_key()] = idea2
 
         beat = (story.MakeBeat('b')
              .ok_if(concept(0), concept(1))
@@ -164,9 +164,8 @@ class Test(unittest.TestCase):
         concept3 = story.Concept([charParam], "ca2")
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            story_state.EstablishedIdea(concept, [chars[0]]),
-        ]
+        idea = story_state.EstablishedIdea(concept, (chars[0],), ())
+        state.established_ideas[idea.get_key()] = idea
 
         beat = (story.MakeBeat('ba')
              .ok_if(concept(0))
@@ -182,13 +181,14 @@ class Test(unittest.TestCase):
         concept3 = story.Concept([], "ca3")
 
         state = story_state.StoryState(free_arguments)
-        state.established_ideas = [
-            # It shouldn't get confused and not look at the next idea of the
-            # same concept
-            story_state.EstablishedIdea(concept, [chars[0]]),
-            story_state.EstablishedIdea(concept, [chars[1]]),
-            story_state.EstablishedIdea(concept2, [chars[1]]),
-        ]
+        # It shouldn't get confused and not look at the next idea of the
+        # same concept
+        idea1 = story_state.EstablishedIdea(concept, (chars[0],), ())
+        idea2 = story_state.EstablishedIdea(concept, (chars[1],), ())
+        idea3 = story_state.EstablishedIdea(concept2, (chars[1],), ())
+        state.established_ideas[idea1.get_key()] = idea1
+        state.established_ideas[idea2.get_key()] = idea2
+        state.established_ideas[idea3.get_key()] = idea3
 
         beat = (story.MakeBeat('ba')
              .if_not(concept(story.any1), concept2(story.any1))
@@ -197,10 +197,12 @@ class Test(unittest.TestCase):
 
         self.assertIsNone(state.try_update_with_beat(beat))
 
-        state.established_ideas = [
-            story_state.EstablishedIdea(concept, [chars[0]]),
-            story_state.EstablishedIdea(concept2, [chars[1]]),
-        ]
+        state = story_state.StoryState(free_arguments)
+        idea1 = story_state.EstablishedIdea(concept, (chars[0],), ())
+        idea2 = story_state.EstablishedIdea(concept2, (chars[1],), ())
+        state.established_ideas[idea1.get_key()] = idea1
+        state.established_ideas[idea2.get_key()] = idea2
+
         # Should work if the ideas have different args
         self.assertIsNotNone(state.try_update_with_beat(beat))
 

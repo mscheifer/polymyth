@@ -9,12 +9,8 @@ import heros_journey
 
 # Parm types
 charParam = 'char_param_type'
+locationParam = "location_param_type"
 
-characterHasDeadBrother = Concept([charParam], "deadBro")
-characterIsPI = Concept([charParam], "isPI")
-
-# 1st parameter is the detective
-hasACase = Concept([charParam], "hasACase")
 caseOfMissingFather = Concept([charParam], "missingFather")
 
 # 1st parameter is the detective, 2nd is mentor
@@ -42,14 +38,15 @@ closure = Concept([charParam], "closure")
 
 storyStart = Concept([], "##start##")
 
+isPI = Concept([charParam], "isPI")
+hasDeadBrother = Concept([charParam], "deadBro")
+hasACase = Concept([charParam], "hasACase")
 isProtag = Concept([charParam], "isProtag")
 isCreepy = Concept([charParam], "isCreepy")
 isPerp = Concept([charParam], "isPerp")
 isClient = Concept([charParam], "isClient")
 isObsessive = Concept([charParam], "isObessive")
 
-wentHome = Concept([charParam], "wentHome")
-enteredPIOffice = Concept([charParam], "enteredPIOffice")
 died = Concept([charParam], "died")
 gotArrested = Concept([charParam], "gotArrested")
 gotAGun = Concept([charParam], "gotAGun")
@@ -58,9 +55,8 @@ protagGotShot = Concept([], "protagGotShot")
 kickedOutClient = Concept([charParam, charParam], "kickedOutClient")
 piGotRobbed = Concept([], "piGotRobbed")
 
-burglarsHungOutAtBar = Concept([], "burglarsHungOutAtBar")
-fatherHungOutAtBar = Concept([], "fatherHungOutAtBar")
-wentToSeedyBar = Concept([], "wentToSeedyBar")
+burglarsHungOutAtBar = Concept([locationParam], "burglarsHungOutAtBar")
+fatherHungOutAtBar = Concept([locationParam], "fatherHungOutAtBar")
 talkedToMysteriousWoman = Concept([], "talkedToMysteriousWoman")
 
 wifeDiedRandomly = Concept([charParam], "wifeDiedRandomly")
@@ -71,69 +67,83 @@ satanicCult = Concept([], "satanicCult")
 secretMessageSinger = Concept([], "secretMessageSinger")
 foundMotive = Concept([], "foundMotive")
 
+# Locations
+isPIOffice = Concept([locationParam], "PI Office")
+isPIHome = Concept([locationParam], "PI home")
+isBar = Concept([locationParam], "bar")
+
+nowAtLocation = Concept(
+    [charParam], "nowAtLocation", value_parameter_types=[locationParam]
+)
+def nowAt(character, location):
+    return nowAtLocation.current([character], [location])
+
 narrative_pieces = (
     [
         MakeBeat("Introduce PI")
             .if_not(storyStart)
-            .sets_up(storyStart, characterIsPI(1), enteredPIOffice(1)),
+            .sets_up(storyStart, isPI(1), nowAt(1, 2), isPIOffice(2)),
 
         MakeBeat("PI is protagonist")
-            .ok_if(storyStart, characterIsPI(1))
+            .ok_if(storyStart, isPI(1))
             .if_not(isProtag(any1))
             .sets_up(isProtag(1)),
 
         MakeBeat("Reads political scandal in paper")
-            .ok_if(enteredPIOffice(0), isProtag(0))
+            .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
             .sets_up(politicalScandal),
 
         MakeBeat("Introduce dead brother")
-            .if_not(characterHasDeadBrother(any1))
+            .if_not(hasDeadBrother(any1))
             .if_not(heros_journey.ghost)
             .ok_if(isProtag(0))
-            .sets_up(characterHasDeadBrother(0), heros_journey.you, heros_journey.ghost),
+            .sets_up(hasDeadBrother(0), heros_journey.you, heros_journey.ghost),
 
         MakeBeat("Client walks in")
-            .if_not(enteredPIOffice(any1), isClient(any1)) # for any other char
-            .if_not(characterIsPI(1))
+            .if_not(nowAt(any1, 2), isClient(any1)) # for any other char
             .if_not(hasACase(0))
-            .ok_if(characterIsPI(0), enteredPIOffice(0))
-            .sets_up(enteredPIOffice(1), isClient(1)),
+            .if_not(isPI(1))
+            .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2))
+            .sets_up(nowAt(1, 2), isClient(1)),
 
         MakeBeat("PI tells client they love them. Client goes home. PI goes home")
-            .ok_if(characterIsPI(0), enteredPIOffice(1), isClient(1), heros_journey.ghost)
-            .sets_up(isCreepy(0), wentHome(0), heros_journey.need),
+            .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), heros_journey.ghost)
+            .if_not(isPIOffice(3))
+            .sets_up(isCreepy(0), nowAt(0, 3), isPIHome(3), heros_journey.need),
 
         MakeBeat("Yells at client to get out. Goes home.")
-            .ok_if(characterIsPI(0), enteredPIOffice(1), isClient(1), heros_journey.ghost)
-            .sets_up(kickedOutClient(0,1), wentHome(0), heros_journey.need),
+            .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), heros_journey.ghost)
+            .if_not(isPIOffice(3))
+            .sets_up(kickedOutClient(0,1), nowAt(0, 3), isPIHome(3), heros_journey.need),
 
         MakeBeat("Father missing case")
-            .ok_if(characterIsPI(0), enteredPIOffice(1), isClient(1), heros_journey.ghost)
-            .if_not(kickedOutClient(0,1))
+            .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2), isClient(1), nowAt(1, 2), heros_journey.ghost)
             .if_not(hasACase(0))
             .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
 
         MakeBeat("Takes gun out of desk")
-            .ok_if(enteredPIOffice(0), isProtag(0))
+            .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
             .sets_up(gotAGun(0)),
 
         MakeBeat("Someone robs PI")
             .if_not(hasACase(0))
-            .ok_if(characterIsPI(0), wentHome(0))
+            .ok_if(isPI(0), nowAt(0, 1), isPIHome(1))
             .sets_up(piGotRobbed, hasACase(0)),
 
         MakeBeat("Finds matchbox from burglars")
             .ok_if(piGotRobbed)
-            .sets_up(burglarsHungOutAtBar, heros_journey.go),
+            .if_not(isPIOffice(1))
+            .if_not(isPIHome(1))
+            .sets_up(burglarsHungOutAtBar(1), isBar(1), heros_journey.go),
 
         MakeBeat("Has big conspiracy board with yarn and stuff")
             .if_not(hasGuidance(0, any1))
-            .ok_if(enteredPIOffice(0), isProtag(0), hasACase(0), heros_journey.need)
+            .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0), hasACase(0), heros_journey.need)
             .sets_up(isObsessive(0)),
 
         MakeBeat("Asks old boss for help")
             .ok_if(hasACase(1), heros_journey.need)
-            .if_not(isObsessive(1)) # because leads to contradictory endoings
+            .if_not(isObsessive(1)) # because leads to contradictory endings
             .if_not(isProtag(2))
             .if_not(isClient(2))
             .if_not(hasGuidance(1,any1))
@@ -150,26 +160,31 @@ narrative_pieces = (
 
         MakeBeat("Finds matchbox on father's body.")
             .ok_if(foundDeadFather(1), heros_journey.go)
-            .sets_up(fatherHungOutAtBar),
+            .if_not(isPIOffice(1))
+            .if_not(isPIHome(1))
+            .sets_up(fatherHungOutAtBar(1), isBar(1)),
 
         MakeBeat("Goes to seedy bar.")
-            .ok_if(fatherHungOutAtBar)
-            .ok_if(burglarsHungOutAtBar)
-            .sets_up(wentToSeedyBar),
+            .ok_if(fatherHungOutAtBar(1), isPI(0))
+            .ok_if(burglarsHungOutAtBar(1), isPI(0))
+            .sets_up(nowAt(0, 1)),
 
         MakeBeat("Listens to nightclub singer. Realizes it's a coded message")
-            .ok_if(wentToSeedyBar)
+            .ok_if(nowAt(0, 1), isBar(1))
             .sets_up(secretMessageSinger),
 
+        # TODO: PI's mom calls him and talks for a long time with PI just
+        # giving meeker and shorter answers
+
         MakeBeat("Talks to mysterious woman.")
-            .ok_if(wentToSeedyBar)
+            .ok_if(nowAt(0, 1), isBar(1))
             .sets_up(talkedToMysteriousWoman),
 
         # sets up for character change at the end, this is needed to accept
         # that the mentor was a bad guy
         MakeBeat("Mystery woman says dead father betrayed his own brother and "
             + "you have to accept loss.")
-            .ok_if(characterHasDeadBrother(1), talkedToMysteriousWoman)
+            .ok_if(hasDeadBrother(1), talkedToMysteriousWoman)
             .sets_up(heros_journey.find),
 
         # sets up for character change at the end
@@ -265,9 +280,10 @@ to_add_later = (
 )
 
 free_characters = frozenset(["Alan", "Sarah", "David", "Julie"])
+free_locations = frozenset(["locA", "locB", "locC"])
 
 # TODO: add other non-character params to this map with their own argument sets
-free_arguments = {charParam:free_characters}
+free_arguments = {charParam:free_characters, locationParam:free_locations}
 
 #TODO: could make some concepts need to be used more than once to reach an end.
 

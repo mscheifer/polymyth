@@ -70,17 +70,27 @@ class NarrativePiece:
             for concept in itertools.chain.from_iterable(
                 self.parameterized_prohibitive_concept_tuples
             )
-            for param in concept.parameters
+            for param in (
+                list(concept.key_parameters) + list(concept.value_parameters)
+            )
         )
 
+        # Bound params must be used in both prohbited concepts and something
+        # else, or they can be one of the specific ANYs.
         for param in all_prohib_params:
             assert (
                 any(
-                    param in param_output_concept.parameters
+                    param in (
+                        list(param_output_concept.key_parameters) +
+                        list(param_output_concept.value_parameters)
+                    )
                     for param_output_concept in self.parameterized_output_concepts
                 ) or
                 any(
-                    param in param_req_concept.parameters
+                    param in (
+                        list(param_req_concept.key_parameters) +
+                        list(param_req_concept.value_parameters)
+                    )
                     for param_req_concepts in self.parameterized_required_concept_tuples
                     for param_req_concept in param_req_concepts
                 ) or
@@ -91,16 +101,33 @@ class NarrativePiece:
         return self.text
 
 class Concept:
+    # In the common case, value_parameters is empty, so there is only 1 possible
+    # value for the "key", which means it's just a normal concept established
+    # once. If there are value parameters then the concept can be re-established
+    # with the same key and different values, replacing the previous state.
+    #
     # is exclusive is whether two parameters can be bound to the same thing
-    def __init__(self, parameter_types, debug_name=None, is_exclusive=False):
-        assert isinstance(parameter_types, list)
-        assert None not in parameter_types
-        self.parameter_types = parameter_types
+    def __init__(
+        self,
+        key_parameter_types,
+        debug_name=None,
+        value_parameter_types=[],
+        is_exclusive=False
+    ):
+        assert isinstance(key_parameter_types, list)
+        assert None not in key_parameter_types
+        assert isinstance(value_parameter_types, list)
+        assert None not in value_parameter_types
+        self.key_parameter_types = key_parameter_types
+        self.value_parameter_types = value_parameter_types
         self.debug_name = debug_name
         self.is_exclusive = is_exclusive
 
     def get_parameterized(self):
-        assert len(self.parameter_types) == 0, (
+        assert len(self.key_parameter_types) == 0, (
+             "You must pass in names for the paramters to: " + str(self)
+        )
+        assert len(self.value_parameter_types) == 0, (
              "You must pass in names for the paramters to: " + str(self)
         )
         return self()
@@ -111,18 +138,35 @@ class Concept:
         return self.debug_name
 
     def __call__(self, *args):
-        return _ParameterizedConcept(self, args)
+        return _ParameterizedConcept(self, args, [])
+
+    # current() is a convience feature to track mutable state that changes over the
+    # course of the story. It is possible to do everything this function is used for
+    # by manually managing ordered sections of the story as concepts but that
+    # approach is verbose and buggy, and likely unnecessarily rigid. For example: if
+    # you were tracking the current location of a character you could define like 7
+    # points of time and then have every beat check each time and check against the
+    # subsequent time. That's already pretty verbose and it restricts how much the
+    # character can move. Making it more flexible would make it even more
+    # complicated, and you would still have to choose some finite limit.
+    def current(self, key_arguments, variable_arguments):
+        return _ParameterizedConcept(self, key_arguments, variable_arguments)
 
 class _ParameterizedConcept:
-    def __init__(self, concept, parameters):
+    def __init__(self, concept, key_parameters, value_parameters):
         self.concept = concept
-        assert len(parameters) == len(concept.parameter_types)
-        self.parameters = parameters
+        assert None not in key_parameters
+        assert None not in value_parameters
+        assert len(key_parameters) == len(concept.key_parameter_types)
+        assert len(value_parameters) == len(concept.value_parameter_types)
+        self.key_parameters = key_parameters
+        self.value_parameters = value_parameters
 
     def get_parameterized(self):
         return self
 
     def __repr__(self):
         return "P-" + str(self.concept)
+
 
 story_end = Concept([], "##END##")
