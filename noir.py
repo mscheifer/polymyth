@@ -47,6 +47,10 @@ isPerp = Concept([charParam], "isPerp")
 isClient = Concept([charParam], "isClient")
 isObsessive = Concept([charParam], "isObessive")
 
+#TODO: these should be stateful
+isChainedUp = Concept([charParam], "isChainedUp")
+isFree = Concept([charParam], "isFree")
+
 died = Concept([charParam], "died")
 gotArrested = Concept([charParam], "gotArrested")
 gotAGun = Concept([charParam], "gotAGun")
@@ -66,6 +70,9 @@ politicalScandal = Concept([], "politicalScandal")
 satanicCult = Concept([], "satanicCult")
 secretMessageSinger = Concept([], "secretMessageSinger")
 foundMotive = Concept([], "foundMotive")
+heardCodedWords = Concept([], "heardCodedWords")
+dogCanFindKeys = Concept([], "dogCanFindKeys")
+knowPerpIsInChinatown = Concept([], "knowIsInChinatown")
 
 # Locations
 isPIOffice = Concept([locationParam], "PI Office")
@@ -86,6 +93,8 @@ narrative_pieces = (
 
         MakeBeat("PI is protagonist")
             .ok_if(storyStart, isPI(1))
+            # Need to establish protagonist before this phase is done
+            .if_not(heros_journey.you)
             .if_not(isProtag(any1))
             .sets_up(isProtag(1)),
 
@@ -125,6 +134,10 @@ narrative_pieces = (
             .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
             .sets_up(gotAGun(0)),
 
+        MakeBeat("Wakes up disheveled. Asks dog to find keys while getting dressed.")
+            .ok_if(nowAt(0, 1), isPIHome(1))
+            .sets_up(dogCanFindKeys),
+
         MakeBeat("Someone robs PI")
             .if_not(hasACase(0))
             .ok_if(isPI(0), nowAt(0, 1), isPIHome(1))
@@ -159,10 +172,14 @@ narrative_pieces = (
             .sets_up(foundDeadFather(1), heros_journey.go),
 
         MakeBeat("Finds matchbox on father's body.")
-            .ok_if(foundDeadFather(1), heros_journey.go)
+            .ok_if(foundDeadFather(0), heros_journey.go)
             .if_not(isPIOffice(1))
             .if_not(isPIHome(1))
             .sets_up(fatherHungOutAtBar(1), isBar(1)),
+
+        MakeBeat("Finds paper with non-sensical phrases.")
+            .ok_if(foundDeadFather(0), heros_journey.go)
+            .sets_up(heardCodedWords),
 
         MakeBeat("Goes to seedy bar.")
             .ok_if(fatherHungOutAtBar(1), isPI(0))
@@ -170,12 +187,13 @@ narrative_pieces = (
             .sets_up(nowAt(0, 1)),
 
         MakeBeat("Listens to nightclub singer. Realizes it's a coded message")
-            .ok_if(nowAt(0, 1), isBar(1))
+            .ok_if(nowAt(0, 1), isBar(1), heardCodedWords)
             .sets_up(secretMessageSinger),
 
         # TODO: PI's mom calls him and talks for a long time with PI just
         # giving meeker and shorter answers
 
+        # TODO: this could also be a fortune teller, so not at the bar
         MakeBeat("Talks to mysterious woman.")
             .ok_if(nowAt(0, 1), isBar(1))
             .sets_up(talkedToMysteriousWoman),
@@ -195,7 +213,8 @@ narrative_pieces = (
         # TODO: follow up with watching them perform a ritual that fails.
         # TODO: if supernatural established then maybe could be real
         MakeBeat("Finds out that dead father was in satanic cult.")
-            .ok_if(heros_journey.find, caseOfMissingFather(1))
+            # Require PI is obsessive for thematic reasons
+            .ok_if(heros_journey.find, isObsessive(1), caseOfMissingFather(1))
             .sets_up(foundMotive, satanicCult),
 
         MakeBeat("Overhears that dead father was involved in scandal.")
@@ -205,6 +224,10 @@ narrative_pieces = (
         MakeBeat("Finds evidence criminal mastermind did it.")
             .ok_if(foundMotive, isObsessive(1))
             .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
+
+        MakeBeat("Dog finds keys to free PI.")
+            .ok_if(isChainedUp(0), isPI(0), dogCanFindKeys)
+            .sets_up(isFree(0)),
 
         # TODO: need to expand on this
         MakeBeat("Finds evidence his old boss did it.")
@@ -257,22 +280,7 @@ narrative_pieces = (
         MakeBeat("Wife last words become meaningful.")
             .ok_if(wifeDiedRandomly(1), heros_journey.theReturn)
             .sets_up(regainFaith(1), heros_journey.change),
-    ]
-)
 
-#TODO: concept, children's story logic.
-
-#TODO: if farther from home -> sparser homes. Pavement is cracked up
-
-discreteToContinuous = Concept([], "discrete")
-knowPerpIsInChinatown = Concept([], "knowIsInChinatown")
-
-to_add_later = (
-    [
-        MakeBeat("You should first describe my life by how I overcame a youthful obsession " +
-            "with discrete mathematics and found love with continuous values. Real beauty exists " +
-            "again within itself and does not stop at some arbitrary depth.")
-            .sets_up(discreteToContinuous),
         MakeBeat("Forget it Jake, it's Chinatown.")
             .ok_if(knowPerpIsInChinatown)
             .sets_up(story_end),
@@ -282,10 +290,7 @@ to_add_later = (
 free_characters = frozenset(["Alan", "Sarah", "David", "Julie"])
 free_locations = frozenset(["locA", "locB", "locC"])
 
-# TODO: add other non-character params to this map with their own argument sets
 free_arguments = {charParam:free_characters, locationParam:free_locations}
-
-#TODO: could make some concepts need to be used more than once to reach an end.
 
 #TODO: generally -> character may do thing in scene because of trait -> characters doing actions can
 # create a theme. Setting for action can be caused by another theme.
