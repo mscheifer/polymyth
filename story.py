@@ -1,3 +1,4 @@
+import collections
 import itertools
 
 # If we break the narrative down into small enough pieces, it becomes a language. We can recombine
@@ -97,6 +98,26 @@ class NarrativePiece:
                 param in anys
             ), "Cannot use non-any param: " + str(param) + " only in prohibited concepts"
 
+        all_parameterized_concepts = itertools.chain(
+            *self.parameterized_required_concept_tuples,
+            self.parameterized_output_concepts,
+            *self.parameterized_prohibitive_concept_tuples
+        )
+
+        named_param_to_types = collections.defaultdict(set)
+
+        for c in all_parameterized_concepts:
+            for param, param_type in itertools.chain(
+                zip(c.key_parameters, c.concept.key_parameter_types),
+                zip(c.value_parameters, c.concept.value_parameter_types)
+            ):
+                named_param_to_types[param].add(param_type)
+
+        for named_param, types in named_param_to_types.items():
+            assert len(types) == 1, (
+                str(named_param) + " used with more than one type:" + str(types)
+            )
+
     def __repr__(self):
         return self.text
 
@@ -130,7 +151,7 @@ class Concept:
         assert len(self.value_parameter_types) == 0, (
              "You must pass in names for the paramters to: " + str(self)
         )
-        return self()
+        return _ParameterizedConcept(self, [], [])
 
     def __repr__(self):
         if self.debug_name is None:
