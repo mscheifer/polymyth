@@ -5,7 +5,7 @@ from story import (
     MakeBeat,
     story_end
 )
-import heros_journey
+from character_arcs import ProtagonistDefinition, HerosJourney
 
 # Parm types
 charParam = 'char_param_type'
@@ -93,7 +93,7 @@ narrative_pieces = ([
     MakeBeat("PI is protagonist")
         .ok_if(storyStart, isPI(1))
         # Need to establish protagonist before this phase is done
-        .if_not(heros_journey.you)
+        .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
         .sets_up(isProtag(1)),
 
@@ -103,9 +103,11 @@ narrative_pieces = ([
 
     MakeBeat("Introduce dead brother")
         .if_not(hasDeadBrother(any1))
-        .if_not(heros_journey.ghost)
+        .if_not(ProtagonistDefinition.ghost)
         .ok_if(isProtag(0))
-        .sets_up(hasDeadBrother(0), heros_journey.you, heros_journey.ghost),
+        .sets_up(
+            hasDeadBrother(0), HerosJourney.you, ProtagonistDefinition.ghost
+        ),
 
     MakeBeat("Client walks in")
         .if_not(nowAt(any1, 2), isClient(any1)) # for any other char
@@ -115,19 +117,19 @@ narrative_pieces = ([
         .sets_up(nowAt(1, 2), isClient(1)),
 
     MakeBeat("PI tells client they love them. Client goes home. PI goes home")
-        .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), heros_journey.ghost)
+        .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), ProtagonistDefinition.ghost)
         .if_not(isPIOffice(3))
-        .sets_up(isCreepy(0), nowAt(0, 3), isPIHome(3), heros_journey.need),
+        .sets_up(isCreepy(0), nowAt(0, 3), isPIHome(3), HerosJourney.need),
 
     MakeBeat("Yells at client to get out. Goes home.")
-        .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), heros_journey.ghost)
+        .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), ProtagonistDefinition.ghost)
         .if_not(isPIOffice(3))
-        .sets_up(kickedOutClient(0,1), nowAt(0, 3), isPIHome(3), heros_journey.need),
+        .sets_up(kickedOutClient(0,1), nowAt(0, 3), isPIHome(3), HerosJourney.need),
 
     MakeBeat("Father missing case")
-        .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2), isClient(1), nowAt(1, 2), heros_journey.ghost)
+        .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2), isClient(1), nowAt(1, 2), ProtagonistDefinition.ghost)
         .if_not(hasACase(0))
-        .sets_up(hasACase(0), caseOfMissingFather(0), heros_journey.need),
+        .sets_up(hasACase(0), caseOfMissingFather(0), HerosJourney.need),
 
     MakeBeat("Takes gun out of desk")
         .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
@@ -146,15 +148,15 @@ narrative_pieces = ([
         .ok_if(piGotRobbed)
         .if_not(isPIOffice(1))
         .if_not(isPIHome(1))
-        .sets_up(burglarsHungOutAtBar(1), isBar(1), heros_journey.go),
+        .sets_up(burglarsHungOutAtBar(1), isBar(1), HerosJourney.go),
 
     MakeBeat("Has big conspiracy board with yarn and stuff")
         .if_not(hasGuidance(0, any1))
-        .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0), hasACase(0), heros_journey.need)
+        .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0), hasACase(0), HerosJourney.need)
         .sets_up(isObsessive(0)),
 
     MakeBeat("Asks old boss for help")
-        .ok_if(hasACase(1), heros_journey.need)
+        .ok_if(hasACase(1), HerosJourney.need)
         .if_not(isObsessive(1)) # because leads to contradictory endings
         .if_not(isProtag(2))
         .if_not(isClient(2))
@@ -168,16 +170,16 @@ narrative_pieces = ([
 
     MakeBeat("Finds father dead.")
         .ok_if(inFathersAppartment(1))
-        .sets_up(foundDeadFather(1), heros_journey.go),
+        .sets_up(foundDeadFather(1), HerosJourney.go),
 
     MakeBeat("Finds matchbox on father's body.")
-        .ok_if(foundDeadFather(0), heros_journey.go)
+        .ok_if(foundDeadFather(0), HerosJourney.go)
         .if_not(isPIOffice(1))
         .if_not(isPIHome(1))
         .sets_up(fatherHungOutAtBar(1), isBar(1)),
 
     MakeBeat("Finds paper with non-sensical phrases.")
-        .ok_if(foundDeadFather(0), heros_journey.go)
+        .ok_if(foundDeadFather(0), HerosJourney.go)
         .sets_up(heardCodedWords),
 
     MakeBeat("Goes to seedy bar.")
@@ -202,27 +204,27 @@ narrative_pieces = ([
     MakeBeat("Mystery woman says dead father betrayed his own brother and "
         + "you have to accept loss.")
         .ok_if(hasDeadBrother(1), talkedToMysteriousWoman)
-        .sets_up(heros_journey.find),
+        .sets_up(HerosJourney.find),
 
     # sets up for character change at the end
     MakeBeat("Mystery woman says dead father had no faith but you have to have faith.")
         .ok_if(wifeDiedRandomly(1), talkedToMysteriousWoman, caseOfMissingFather(1))
-        .sets_up(heros_journey.find),
+        .sets_up(HerosJourney.find),
 
     # TODO: follow up with watching them perform a ritual that fails.
     # TODO: if supernatural established then maybe could be real
     MakeBeat("Finds out that dead father was in satanic cult.")
         # Require PI is obsessive for thematic reasons
-        .ok_if(heros_journey.find, isObsessive(1), caseOfMissingFather(1))
+        .ok_if(HerosJourney.find, isObsessive(1), caseOfMissingFather(1))
         .sets_up(foundMotive, satanicCult),
 
     MakeBeat("Overhears that dead father was involved in scandal.")
-        .ok_if(heros_journey.find, politicalScandal, caseOfMissingFather(1))
+        .ok_if(HerosJourney.find, politicalScandal, caseOfMissingFather(1))
         .sets_up(foundMotive),
 
     MakeBeat("Finds evidence criminal mastermind did it.")
         .ok_if(foundMotive, isObsessive(1))
-        .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
+        .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), HerosJourney.take),
 
     MakeBeat("Dog finds keys to free PI.")
         .ok_if(isChainedUp(0), isPI(0), dogCanFindKeys)
@@ -231,10 +233,10 @@ narrative_pieces = ([
     # TODO: need to expand on this
     MakeBeat("Finds evidence his old boss did it.")
         .ok_if(foundMotive, hasGuidance(1,2))
-        .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), heros_journey.take),
+        .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), HerosJourney.take),
 
     MakeBeat("Goes to perps place.")
-        .ok_if(foundEvidenceOfPerp(1,2), heros_journey.take)
+        .ok_if(foundEvidenceOfPerp(1,2), HerosJourney.take)
         .sets_up(isAtHouse(1,2)),
 
     MakeBeat("Perp sees PI and bolts.")
@@ -247,7 +249,7 @@ narrative_pieces = ([
 
     MakeBeat("PI is shot in shoulder by perp while running")
         .ok_if(chasing(1, 2), gotAGun(2), isProtag(2))
-        .sets_up(protagGotShot, heros_journey.theReturn),
+        .sets_up(protagGotShot, HerosJourney.theReturn),
 
     MakeBeat("Frog 1 is here and I'm going to get him..")
         .ok_if(chasing(1, 2), isObsessive(2))
@@ -264,21 +266,21 @@ narrative_pieces = ([
 
     MakeBeat("Protag throws gun away")
         .ok_if(protagGotShot, gotAGun(1), isProtag(1))
-        .sets_up(heros_journey.change),
+        .sets_up(HerosJourney.change),
 
     MakeBeat("Client learns who kidnapped/killed father and thanks PI for closure")
-        .ok_if(isPerp(1), gotArrested(1), heros_journey.change)
-        .ok_if(isPerp(1), died(1), heros_journey.change)
+        .ok_if(isPerp(1), gotArrested(1), HerosJourney.change)
+        .ok_if(isPerp(1), died(1), HerosJourney.change)
         .sets_up(story_end),
 
     MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
         .if_not(wifeDiedRandomly(any1))
-        .if_not(heros_journey.ghost)
-        .sets_up(wifeDiedRandomly(1), heros_journey.ghost),
+        .if_not(ProtagonistDefinition.ghost)
+        .sets_up(wifeDiedRandomly(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Wife last words become meaningful.")
-        .ok_if(wifeDiedRandomly(1), heros_journey.theReturn)
-        .sets_up(regainFaith(1), heros_journey.change),
+        .ok_if(wifeDiedRandomly(1), HerosJourney.theReturn)
+        .sets_up(regainFaith(1), HerosJourney.change),
 
     MakeBeat("Forget it Jake, it's Chinatown.")
         .ok_if(knowPerpIsInChinatown)
