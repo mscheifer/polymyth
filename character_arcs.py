@@ -1,13 +1,13 @@
 from story import Concept
 
-class ProtagonistDefinition():
+class ProtagonistDefinition:
     want = Concept([], "want")
     need = Concept([], "need")
     lie = Concept([], "lie")
     ghost = Concept([], "ghost")
 
 # The journey steps, these concepts are established at the END of each section
-class HerosJourney():
+class HerosJourney:
     you = Concept([], "You") # get audience to identify with protag
     need = Concept([], "Need") # Establish need
     go = Concept([], "Go") # cross threshold
