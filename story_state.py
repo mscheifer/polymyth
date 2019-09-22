@@ -333,7 +333,7 @@ class StoryState:
                 if key in self.established_ideas:
                     existing_value = self.established_ideas[key].value_arguments
                     if existing_value != idea.value_arguments:
-                        print("Replacing", existing_value, "with:", idea)
+                        print(" . Replacing", existing_value, "with:", idea)
                 self.established_ideas[key] = idea
 
             self.used_ideas.update(used_ideas)
