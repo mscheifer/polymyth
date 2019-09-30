@@ -7,6 +7,8 @@ from story import (
 )
 from character_arcs import ProtagonistDefinition, HerosJourney
 
+import prose
+
 # Parm types
 charParam = 'char_param_type'
 locationParam = "location_param_type"
@@ -36,9 +38,12 @@ selfDefenseKillPerp = Concept([charParam], "selfDefenseKillPerp")
 # 1st parameter is the detective
 closure = Concept([charParam], "closure")
 
-storyStart = Concept([], "##start##")
-
 isPI = Concept([charParam], "isPI")
+isRamenShopOwner = Concept([charParam], "isRamenShopOwner")
+isFormerCop = Concept([charParam], "isFormerCop")
+isFormerOpiumAdict = Concept([charParam], "isFormerOpiumAdict")
+isAwkward = Concept([charParam], "isAwkward")
+isCocky = Concept([charParam], "isCocky")
 hasDeadBrother = Concept([charParam], "deadBro")
 hasACase = Concept([charParam], "hasACase")
 isProtag = Concept([charParam], "isProtag")
@@ -46,6 +51,8 @@ isCreepy = Concept([charParam], "isCreepy")
 isPerp = Concept([charParam], "isPerp")
 isClient = Concept([charParam], "isClient")
 isObsessive = Concept([charParam], "isObessive")
+isParanoid = Concept([charParam], "isParanoid")
+isInsecure = Concept([charParam], "isInsecure")
 
 #TODO: these should be stateful
 isChainedUp = Concept([charParam], "isChainedUp")
@@ -57,7 +64,7 @@ gotAGun = Concept([charParam], "gotAGun")
 protagGotShot = Concept([], "protagGotShot")
 
 kickedOutClient = Concept([charParam, charParam], "kickedOutClient")
-piGotRobbed = Concept([], "piGotRobbed")
+protagGotRobbed = Concept([], "piGotRobbed")
 
 burglarsHungOutAtBar = Concept([locationParam], "burglarsHungOutAtBar")
 fatherHungOutAtBar = Concept([locationParam], "fatherHungOutAtBar")
@@ -74,10 +81,24 @@ heardCodedWords = Concept([], "heardCodedWords")
 dogCanFindKeys = Concept([], "dogCanFindKeys")
 knowPerpIsInChinatown = Concept([], "knowIsInChinatown")
 
+needsToHelpMom = Concept([charParam], "needsToHelpMom")
+wasRejectedForDate = Concept([charParam], "wasRejectedForDate")
+askOutAfterManyDates = Concept([charParam], "askOutAfterManyDates")
+wantsToFightWaiter = Concept([charParam], "wantsToFightWaiter")
+
+tripping = Concept([charParam], "tripping")
+tripyExistentialCrisis = Concept([charParam], "tripyExistentialCrisis")
+
 # Locations
-isPIOffice = Concept([locationParam], "PI Office")
-isPIHome = Concept([locationParam], "PI home")
+isUnknownLoc = Concept([locationParam], "unknown loc")
+isPIOffice = Concept([locationParam], "PI office")
+isRamenShop = Concept([locationParam], "Ramen shop")
+isProtagHome = Concept([locationParam], "PI home")
 isBar = Concept([locationParam], "bar")
+isStreets = Concept([locationParam], "streets")
+
+# TODO: make stateful
+isOnPhone = Concept([charParam], "isOnPhone")
 
 nowAtLocation = Concept(
     [charParam], "nowAtLocation", value_parameter_types=[locationParam]
@@ -85,17 +106,67 @@ nowAtLocation = Concept(
 def nowAt(character, location):
     return nowAtLocation.current([character], [location])
 
+#TODO:
+# if early scene mentioned stamp collecting offhandedly
+# then search for missing money turns out it was turned into rare stamps and
+# hidden in plain sight
+
 narrative_pieces = ([
     MakeBeat("Introduce PI")
-        .if_not(storyStart)
-        .sets_up(storyStart, isPI(1), nowAt(1, 2), isPIOffice(2)),
-
-    MakeBeat("PI is protagonist")
-        .ok_if(storyStart, isPI(1))
         # Need to establish protagonist before this phase is done
         .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
-        .sets_up(isProtag(1)),
+        .text(prose.introduce_pi)
+        .sets_up(isProtag(1), isPI(1), nowAt(1, 2), isPIOffice(2)),
+
+    MakeBeat("Introduce PI on phone")
+        .ok_if(isPI(1), nowAt(1, 2), isPIOffice(2))
+        .text(prose.pi_on_phone)
+        .sets_up(isOnPhone(1)),
+
+    MakeBeat("PI is awkward, we learn from asking out on phone call")
+        .ok_if(isPI(1), isOnPhone(1))
+        .if_not(isCocky(1), wifeDiedRandomly(1))
+        .quote(prose.what_are_you_up_to_this_weekend, 1)
+        .quote(prose.just_some_spring_cleaning, 2)
+        .quote(prose.needs_to_help_mom, prose.ask_out_dinner, 1)
+        .sets_up(isAwkward(1), needsToHelpMom(1)),
+
+    MakeBeat("PI rejected")
+        .ok_if(isAwkward(1))
+        .quote(1, prose.pi_rejected)
+        .sets_up(wasRejectedForDate(1)),
+
+    MakeBeat("PI wants to fight waiter")
+        .ok_if(isPI(1), isOnPhone(1))
+        .if_not(isAwkward(1))
+        .quote(prose.pi_phone_ask_out_after_many_dates, 1)
+        .sets_up(askOutAfterManyDates(1)),
+
+    MakeBeat("PI wants to fight waiter")
+        .ok_if(isPI(1), askOutAfterManyDates(1))
+        .text(prose.pi_phone_fight_waiter)
+        .sets_up(wantsToFightWaiter(1)),
+
+    MakeBeat("PI is cocky")
+        .ok_if(isPI(1), isOnPhone(1), wantsToFightWaiter(1))
+        .text(prose.pi_phone_cocky)
+        .sets_up(isCocky(1)),
+
+    MakeBeat("Introduce Ramen shop owner")
+        .text(prose.opened_shop_late_at_night)
+        .text(prose.served_late_night_customers)
+        # Need to establish protagonist before this phase is done
+        .if_not(HerosJourney.you)
+        .if_not(isProtag(any1))
+        .sets_up(isProtag(1), isRamenShopOwner(1), nowAt(1, 2), isRamenShop(2)),
+
+    #TODO: resolution to this arc is coming to terms with himself "I am as much
+    # as I am"
+    MakeBeat("Former cop. Kicked off force due to alcoholism. Hates self for"
+        + " it.")
+        .if_not(ProtagonistDefinition.ghost)
+        .sets_up(isFormerCop(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Reads political scandal in paper")
         .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
@@ -109,45 +180,87 @@ narrative_pieces = ([
             hasDeadBrother(0), HerosJourney.you, ProtagonistDefinition.ghost
         ),
 
+    # TODO: similar scene but regular customer of ramen shop comes in with
+    # problem
     MakeBeat("Client walks in")
+        .text(prose.client_walks_in)
         .if_not(nowAt(any1, 2), isClient(any1)) # for any other char
         .if_not(hasACase(0))
         .if_not(isPI(1))
         .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2))
         .sets_up(nowAt(1, 2), isClient(1)),
 
-    MakeBeat("PI tells client they love them. Client goes home. PI goes home")
+    MakeBeat("PI tells client they love them. Client goes home. PI leaves")
         .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), ProtagonistDefinition.ghost)
         .if_not(isPIOffice(3))
-        .sets_up(isCreepy(0), nowAt(0, 3), isPIHome(3), HerosJourney.need),
+        .sets_up(isCreepy(0), nowAt(0, 3), isUnknownLoc(3), HerosJourney.need),
 
-    MakeBeat("Yells at client to get out. Goes home.")
+    MakeBeat("Yells at client to get out. Leaves.")
         .ok_if(isPI(0), isClient(1), nowAt(0, 2), nowAt(1, 2), isPIOffice(2), ProtagonistDefinition.ghost)
         .if_not(isPIOffice(3))
-        .sets_up(kickedOutClient(0,1), nowAt(0, 3), isPIHome(3), HerosJourney.need),
+        .sets_up(kickedOutClient(0,1), nowAt(0, 3), isUnknownLoc(3), HerosJourney.need),
+
+    MakeBeat("Don't care what you think, eye roll.")
+        .quote(0, prose.i_stopped_caring_what_people_think)
+        .text(prose.rolled_their_eyes, 1)
+        .text(prose.looked_hurt, 0)
+        .ok_if(isCocky(0))
+        .sets_up(isInsecure(0)),
+
+    #TODO: somehow have leaving the office possibly lead to walking home or cut
+    # straight to being home
+
+    MakeBeat("#0 Walks home in the rain. Sees shadows of people following them.")
+        .text(prose.walks_home_sees_shadows, 0)
+        .ok_if(isProtag(0), nowAt(0, 1), isUnknownLoc(1))
+        .sets_up(isParanoid(0), nowAt(0, 2), isStreets(2)),
+
+    MakeBeat("Goes home.")
+        .ok_if(isProtag(0), nowAt(0, 1), isStreets(1))
+        .sets_up(nowAt(0, 2), isProtagHome(2)),
 
     MakeBeat("Father missing case")
         .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2), isClient(1), nowAt(1, 2), ProtagonistDefinition.ghost)
         .if_not(hasACase(0))
         .sets_up(hasACase(0), caseOfMissingFather(0), HerosJourney.need),
 
+    # TODO: next beat here would be to be fake guest at party and try to
+    # eavesdrop on father talking to shady people
+    MakeBeat("Father being shady case")
+        .ok_if(
+            isPI(0),
+            nowAt(0, 2),
+            isPIOffice(2),
+            isClient(1),
+            nowAt(1, 2),
+            ProtagonistDefinition.ghost
+        )
+        .if_not(hasACase(0))
+        .sets_up(hasACase(0), HerosJourney.need),
+
     MakeBeat("Takes gun out of desk")
+        .text(prose.takes_gun_out_of_desk)
         .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
         .sets_up(gotAGun(0)),
 
     MakeBeat("Wakes up disheveled. Asks dog to find keys while getting dressed.")
-        .ok_if(nowAt(0, 1), isPIHome(1))
+        .ok_if(nowAt(0, 1), isProtagHome(1))
         .sets_up(dogCanFindKeys),
 
-    MakeBeat("Someone robs PI")
+    MakeBeat("Someone robs Protag")
         .if_not(hasACase(0))
-        .ok_if(isPI(0), nowAt(0, 1), isPIHome(1))
-        .sets_up(piGotRobbed, hasACase(0)),
+        .ok_if(isProtag(0), nowAt(0, 1), isProtagHome(1))
+        .sets_up(protagGotRobbed, hasACase(0)),
+
+    MakeBeat("PI slept and dreamed of heroin.")
+        .if_not(ProtagonistDefinition.ghost)
+        .ok_if(isPI(0), nowAt(0, 1), isProtagHome(1))
+        .sets_up(isFormerOpiumAdict(0), ProtagonistDefinition.ghost),
 
     MakeBeat("Finds matchbox from burglars")
-        .ok_if(piGotRobbed)
+        .ok_if(protagGotRobbed)
         .if_not(isPIOffice(1))
-        .if_not(isPIHome(1))
+        .if_not(isProtagHome(1))
         .sets_up(burglarsHungOutAtBar(1), isBar(1), HerosJourney.go),
 
     MakeBeat("Has big conspiracy board with yarn and stuff")
@@ -175,7 +288,7 @@ narrative_pieces = ([
     MakeBeat("Finds matchbox on father's body.")
         .ok_if(foundDeadFather(0), HerosJourney.go)
         .if_not(isPIOffice(1))
-        .if_not(isPIHome(1))
+        .if_not(isProtagHome(1))
         .sets_up(fatherHungOutAtBar(1), isBar(1)),
 
     MakeBeat("Finds paper with non-sensical phrases.")
@@ -185,14 +298,28 @@ narrative_pieces = ([
     MakeBeat("Goes to seedy bar.")
         .ok_if(fatherHungOutAtBar(1), isPI(0))
         .ok_if(burglarsHungOutAtBar(1), isPI(0))
+        .if_not(nowAt(0, any1), isBar(any1))
         .sets_up(nowAt(0, 1)),
+
+    #TODO: if isAwkward(1) scene where someone is talking about a standoff with
+    # police because a guy was accused of selling weapons out of shop, and 1
+    # asks if that was true. There's an awkward silence and someone jokingly
+    # asks if he's a cop and pats him on the head
+
+    #TODO: PI is tailing someone. Follows them into a movie theater.
+    # Movie that is playing is thematic
+    # Thinks he sees the person sit down next to someone else. They look like
+    # they're exchanging something, but it's hard to see.
+    # Later in the story it turns out something else was happening.
 
     MakeBeat("Listens to nightclub singer. Realizes it's a coded message")
         .ok_if(nowAt(0, 1), isBar(1), heardCodedWords)
         .sets_up(secretMessageSinger),
 
-    # TODO: PI's mom calls him and talks for a long time with PI just
-    # giving meeker and shorter answers
+    MakeBeat("Mom calls and talks for a long time while he just gives meeker"
+        + " and shorter answers")
+        .ok_if(isAwkward(1))
+        .sets_up(),
 
     # TODO: this could also be a fortune teller, so not at the bar
     MakeBeat("Talks to mysterious woman.")
@@ -235,6 +362,12 @@ narrative_pieces = ([
         .ok_if(foundMotive, hasGuidance(1,2))
         .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), HerosJourney.take),
 
+    # TODO: if PI's ghost is a fear of placeA, final showdown should be at
+    # placeA
+
+    # TODO: if antagonist has pretended to be someone else, final showdown in
+    # house of mirrors
+
     MakeBeat("Goes to perps place.")
         .ok_if(foundEvidenceOfPerp(1,2), HerosJourney.take)
         .sets_up(isAtHouse(1,2)),
@@ -276,6 +409,7 @@ narrative_pieces = ([
     MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
         .if_not(wifeDiedRandomly(any1))
         .if_not(ProtagonistDefinition.ghost)
+        .if_not(isAwkward(1))
         .sets_up(wifeDiedRandomly(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Wife last words become meaningful.")
@@ -285,10 +419,38 @@ narrative_pieces = ([
     MakeBeat("Forget it Jake, it's Chinatown.")
         .ok_if(knowPerpIsInChinatown)
         .sets_up(story_end),
+
+    #TODO: character change: learns that desires to kiss girlfriend on beach
+    # aren't about any real person, just ideas from movies
+
+    MakeBeat("Client's father was a member of a secret society. Society was "
+        + "bringing in shipments of drug (not illegal, just unknown). PI "
+        + "accidentally takes some. Runs off in delerium, seeing things.")
+        .ok_if(HerosJourney.search, isProtag(0), isPI(0))
+        .sets_up(tripping(0)),
+
+    MakeBeat("PI wakes up, his office is missing and nobody remembers him. He "
+        + "takes the drug again and it all comes back")
+        .ok_if(isPI(0), tripping(0))
+        .sets_up(tripyExistentialCrisis(0)),
+
+    MakeBeat("It was real. The PI learns that he is a small thing in a big "
+        + "indifferent world he will never understand. He find's clients father"
+        + "who says 'go home, little man'.")
+        .ok_if(tripyExistentialCrisis(0))
+        .sets_up(story_end),
 ])
 
-free_characters = frozenset(["Alan", "Sarah", "David", "Julie"])
-free_locations = frozenset(["locA", "locB", "locC"])
+#TODO: making choices for the PI to be violent -> endping where the PI turns out
+# to be the murderer
+
+free_characters = frozenset([
+    prose.Character("He", "him", "his", "Alan"),
+    prose.Character("She", "her", "her", "Sarah"),
+    prose.Character("He", "him", "his", "David"),
+    prose.Character("She", "her", "her", "Julie"),
+])
+free_locations = frozenset(["locA", "locB", "locC", "locD", "locE"])
 
 free_arguments = {charParam:free_characters, locationParam:free_locations}
 

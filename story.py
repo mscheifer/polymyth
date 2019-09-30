@@ -11,11 +11,16 @@ any3 = 'any3'
 
 anys = [any1, any2, any3]
 
+ParameterizedSentence = collections.namedtuple(
+    'ParameterizedSentence', 'text_id speaker_param parameters'
+)
+
 class MakeBeat:
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, debug_text):
+        self.debug_text = debug_text
         self.required_concept_tuples = []
         self.prohibitive_concept_tuples = []
+        self.sentences = []
 
     # One call to ok_if() creates a set of concepts that must all be present for this beat to be
     # allowed. If you want to allow this beat for any of several concepts, just call ok_if()
@@ -31,23 +36,35 @@ class MakeBeat:
         self.prohibitive_concept_tuples.append(tuple(prohibitive_concepts))
         return self
 
+    def text(self, text_id, *parameters):
+        self.sentences.append(ParameterizedSentence(text_id, None, parameters))
+        return self
+
+    def quote(self, text_id, speaker_param, *parameters):
+        self.sentences.append(ParameterizedSentence(text_id, speaker_param, parameters))
+        return self
+
     def sets_up(self, *output_concepts):
         return NarrativePiece(
-            self.text,
+            self.debug_text,
             self.required_concept_tuples,
             output_concepts,
-            self.prohibitive_concept_tuples
+            self.prohibitive_concept_tuples,
+            self.sentences
         )
 
 class NarrativePiece:
     def __init__(
         self,
-        text,
+        debug_text,
         required_concept_tuples,
         output_concepts,
         prohibitive_concept_tuples,
+        parameterized_sentences,
     ):
-        self.text = text
+        self.debug_text = debug_text
+
+        self.parameterized_sentences = parameterized_sentences
 
         self.parameterized_required_concept_tuples = [
             [req.get_parameterized() for req in tup]
@@ -119,7 +136,7 @@ class NarrativePiece:
             )
 
     def __repr__(self):
-        return self.text
+        return self.debug_text
 
 class Concept:
     # In the common case, value_parameters is empty, so there is only 1 possible
@@ -180,8 +197,10 @@ class _ParameterizedConcept:
         assert None not in value_parameters
         assert len(key_parameters) == len(concept.key_parameter_types)
         assert len(value_parameters) == len(concept.value_parameter_types)
-        self.key_parameters = key_parameters
-        self.value_parameters = value_parameters
+        # Convert all parameters to strings so it's easier to compare them with
+        # references in output text format strings
+        self.key_parameters = tuple(str(p) for p in key_parameters)
+        self.value_parameters = tuple(str(p) for p in value_parameters)
 
     def get_parameterized(self):
         return self

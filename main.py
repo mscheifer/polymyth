@@ -1,16 +1,24 @@
 import itertools
+import pprint
 import random
+import sys
 
+import prose_state
 import noir
 import story
 import story_state
 
 if __name__ == '__main__':
     state = story_state.StoryState(noir.free_arguments)
+    prose_state = prose_state.ProseState()
+
+    print("Begin", end='')
 
     stillTelling = True
 
     count = 0
+
+    is_debug = len(sys.argv) > 1 and sys.argv[1] == "-d"
 
     while stillTelling:
         count = count + 1
@@ -21,16 +29,26 @@ if __name__ == '__main__':
         random.shuffle(pieces)
         for piece in pieces:
 
-            arguments = state.try_update_with_beat(piece)
+            args_and_used_ideas = state.try_update_with_beat(piece)
 
-            if arguments is not None:
+            if args_and_used_ideas is not None:
                 narrative_piece = piece
                 break
         if narrative_piece is None:
-            print("error no next narrative piece found")
+            print("\n\nerror no next narrative piece found")
             stillTelling = False
         else:
-            print(narrative_piece, " - ", arguments)
+            arguments, used_ideas = args_and_used_ideas
+
+            if is_debug or len(narrative_piece.parameterized_sentences) == 0:
+                incremental_output = pprint.pformat(
+                    (narrative_piece, arguments, used_ideas)
+                ) + "\n"
+            else:
+                incremental_output = prose_state.append(
+                    narrative_piece.parameterized_sentences, arguments
+                )
+            print(incremental_output, sep='', end='')
             for parameterized_concept in narrative_piece.parameterized_output_concepts:
                 if parameterized_concept.concept is story.story_end:
                     stillTelling = False

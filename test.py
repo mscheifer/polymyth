@@ -38,12 +38,12 @@ class Test(unittest.TestCase):
         # In a context where the parameter is bound, idea of concept with the same parameter
         # establishes the concept.
         self.assertTrue(story_state.is_established_by(
-            concept_with_param(0), ideas_with_arg, { 0:argument }
+            concept_with_param(0), ideas_with_arg, { '0':argument }
         ))
         # In a context where the parameter is bound, idea of concept with a different parameter
         # does not establish the concept.
         self.assertFalse(story_state.is_established_by(
-            concept_with_param(0), ideas_with_arg, { 0:'yoyoyo' }
+            concept_with_param(0), ideas_with_arg, { '0':'yoyoyo' }
         ))
 
     def test_try_is_established_and_bind(self):
@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
         self.assertTrue(story_state.try_is_established_and_bind(
             concept_with_param(0), idea_with_arg, bound_params)
         )
-        self.assertEqual(bound_params, {0:argument})
+        self.assertEqual(bound_params, {'0':argument})
 
     def test_try_update_with_beat(self):
         concept = story.Concept([])
