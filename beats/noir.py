@@ -5,7 +5,7 @@ from story import (
     MakeBeat,
     story_end
 )
-from character_arcs import ProtagonistDefinition, HerosJourney
+from beats.character_arcs import ProtagonistDefinition, HerosJourney
 
 import prose
 
@@ -169,6 +169,7 @@ narrative_pieces = ([
         .sets_up(isFormerCop(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Reads political scandal in paper")
+        .text(prose.reads_political_scandal_in_paper, 0)
         .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
         .sets_up(politicalScandal),
 

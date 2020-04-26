@@ -4,12 +4,12 @@ import random
 import sys
 
 import prose_state
-import noir
+import beats.noir
 import story
 import story_state
 
 if __name__ == '__main__':
-    state = story_state.StoryState(noir.free_arguments)
+    state = story_state.StoryState(beats.noir.free_arguments)
     prose_state = prose_state.ProseState()
 
     print("Begin", end='')
@@ -25,7 +25,7 @@ if __name__ == '__main__':
         bound_arguments = None
         narrative_piece = None
         
-        pieces = noir.narrative_pieces.copy()
+        pieces = beats.noir.narrative_pieces.copy()
         random.shuffle(pieces)
         for piece in pieces:
 
