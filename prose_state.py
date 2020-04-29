@@ -52,6 +52,10 @@ class ProseState:
             # marks when we switch to description or another speaker.
 
             if sentence.speaker_param is not None:
+                assert sentence.speaker_param in arguments, (
+                    str(sentence.speaker_param) + " not in " + str(arguments) +
+                    " for " + str(sentence.text_id)
+                )
                 speaker = arguments[sentence.speaker_param]
                 formatted_string = (
                     '"' + formatted_string + '" said ' + speaker.name
