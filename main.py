@@ -40,13 +40,13 @@ if __name__ == '__main__':
         else:
             arguments, used_ideas = args_and_used_ideas
 
-            if is_debug or len(narrative_piece.parameterized_sentences) == 0:
+            if is_debug or len(narrative_piece.parameterized_expressions) == 0:
                 incremental_output = pprint.pformat(
                     (narrative_piece, arguments, used_ideas)
                 ) + "\n"
             else:
                 incremental_output = prose_state.append(
-                    narrative_piece.parameterized_sentences, arguments
+                    narrative_piece.parameterized_expressions, arguments
                 )
             print(incremental_output, sep='', end='')
             for parameterized_concept in narrative_piece.parameterized_output_concepts:

@@ -14,42 +14,6 @@ from collections import namedtuple
 # TODO: renmove name and change to just "subject, object, possessive", then let
 # the prose state determine whether to use the character's name or a pronoun
 
-_auto_inc_id = 1
-
-def _get_id():
-    global _auto_inc_id
-    _auto_inc_id += 1
-    return _auto_inc_id
-
-introduce_pi = _get_id()
-pi_on_phone = _get_id()
-what_are_you_up_to_this_weekend = _get_id()
-just_some_spring_cleaning = _get_id()
-needs_to_help_mom = _get_id()
-ask_out_dinner = _get_id()
-pi_rejected = _get_id()
-pi_phone_fight_waiter = _get_id()
-pi_phone_cocky = _get_id()
-pi_phone_ask_out_after_many_dates = _get_id()
-pi_rejected = _get_id()
-client_walks_in = _get_id()
-pi_met_client_and_father_once_and_pi_admire_father = _get_id()
-father_missing_case = _get_id()
-pi_doesnt_take_confident_client_seriously = _get_id()
-father_not_at_san_diego_house_awkward_pi = _get_id()
-pi_takes_the_case = _get_id()
-awkward_pi_confident_client_fees_and_go_to_client_house = _get_id()
-i_stopped_caring_what_people_think = _get_id()
-rolled_their_eyes = _get_id()
-looked_hurt = _get_id()
-walks_home_sees_shadows = _get_id()
-takes_gun_out_of_desk = _get_id()
-
-opened_shop_late_at_night = _get_id()
-served_late_night_customers = _get_id()
-
-father_was_dishonest = _get_id()
-
 Character = namedtuple('Character', 'subject_pronoun object_pronoun possessive_pronoun name')
 
 # If speaker is not None this sentence should be rendered as a quotation.
@@ -69,7 +33,8 @@ def format(formatted_text, arguments):
             part_of_speach = word[colonIndex + 1 : secondColonIndex]
 
             assert argumentName in arguments, (
-                argumentName + " not passed in for: " + formatted_text
+                argumentName + " not passed in " + str(arguments) + " for: " +
+                formatted_text
             )
 
             if part_of_speach == "n":

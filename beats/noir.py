@@ -7,6 +7,10 @@ from story import (
 )
 from beats.character_arcs import ProtagonistDefinition, HerosJourney
 
+import expression.actions as actions
+import expression.descriptions as descriptions
+import expression.modifiers as modifiers
+import expression.nouns as nouns
 import prose
 
 # Parm types
@@ -116,46 +120,48 @@ narrative_pieces = ([
         # Need to establish protagonist before this phase is done
         .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
-        .text(prose.introduce_pi)
+        .express(actions.lean_back_in_chair)
         .sets_up(isProtag(1), isPI(1), nowAt(1, 2), isPIOffice(2)),
 
     MakeBeat("Introduce PI on phone")
         .ok_if(isPI(1), nowAt(1, 2), isPIOffice(2))
-        .text(prose.pi_on_phone)
+        .express(actions.twirl_phone_cord)
         .sets_up(isOnPhone(1)),
 
     MakeBeat("PI is awkward, we learn from asking out on phone call")
         .ok_if(isPI(1), isOnPhone(1))
         .if_not(isCocky(1), wifeDiedRandomly(1))
-        .quote(prose.what_are_you_up_to_this_weekend, 1)
-        .quote(prose.just_some_spring_cleaning, 2)
-        .quote(prose.needs_to_help_mom, prose.ask_out_dinner, 1)
+        .express(actions.ask_what_are_you_up_to_this_weekend, 1)
+        .express(actions.say_oh_not_much, 2)
+        .express(
+            actions.ask_if_want,
+            nouns.on_a_date,
+            modifiers.again,
+            modifiers.specific_time,
+            1,
+            2
+        )
         .sets_up(isAwkward(1), needsToHelpMom(1)),
 
     MakeBeat("PI rejected")
         .ok_if(isAwkward(1))
-        .quote(1, prose.pi_rejected)
+        .express(actions.get_rejected, 1)
         .sets_up(wasRejectedForDate(1)),
 
     MakeBeat("PI wants to fight waiter")
         .ok_if(isPI(1), isOnPhone(1))
         .if_not(isAwkward(1))
-        .quote(prose.pi_phone_ask_out_after_many_dates, 1)
+        .express(actions.talk_about_fight_waiter, 1, 2)
         .sets_up(askOutAfterManyDates(1)),
-
-    MakeBeat("PI wants to fight waiter")
-        .ok_if(isPI(1), askOutAfterManyDates(1))
-        .text(prose.pi_phone_fight_waiter)
-        .sets_up(wantsToFightWaiter(1)),
 
     MakeBeat("PI is cocky")
         .ok_if(isPI(1), isOnPhone(1), wantsToFightWaiter(1))
-        .text(prose.pi_phone_cocky)
+        .express(actions.be_cocky_on_phone)
         .sets_up(isCocky(1)),
 
     MakeBeat("Introduce Ramen shop owner")
-        .text(prose.opened_shop_late_at_night)
-        .text(prose.served_late_night_customers)
+        .express(descriptions.opened_shop_late_at_night)
+        .express(descriptions.served_late_night_customers)
         # Need to establish protagonist before this phase is done
         .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
@@ -169,7 +175,8 @@ narrative_pieces = ([
         .sets_up(isFormerCop(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Reads political scandal in paper")
-        .text(prose.reads_political_scandal_in_paper, 0)
+        .express(actions.open_paper)
+        .express(actions.read_political_scandal_in_paper, 0)
         .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
         .sets_up(politicalScandal),
 
@@ -184,7 +191,7 @@ narrative_pieces = ([
     # TODO: similar scene but regular customer of ramen shop comes in with
     # problem
     MakeBeat("Client walks in")
-        .text(prose.client_walks_in)
+        .express(actions.see_client_walk_in)
         .if_not(nowAt(any1, 2), isClient(any1)) # for any other char
         .if_not(hasACase(0))
         .if_not(isPI(1))
@@ -202,9 +209,9 @@ narrative_pieces = ([
         .sets_up(kickedOutClient(0,1), nowAt(0, 3), isUnknownLoc(3), HerosJourney.need),
 
     MakeBeat("Don't care what you think, eye roll.")
-        .quote(0, prose.i_stopped_caring_what_people_think)
-        .text(prose.rolled_their_eyes, 1)
-        .text(prose.looked_hurt, 0)
+        .express(actions.say_i_stopped_caring_what_people_think, 0)
+        .express(actions.roll_eyes, 1)
+        .express(actions.look_hurt, 0)
         .ok_if(isCocky(0))
         .sets_up(isInsecure(0)),
 
@@ -212,7 +219,8 @@ narrative_pieces = ([
     # straight to being home
 
     MakeBeat("#0 Walks home in the rain. Sees shadows of people following them.")
-        .text(prose.walks_home_sees_shadows, 0)
+        .express(actions.walk_to, 0, nouns.home, modifiers.in_rain)
+        .express(actions.see_shadows_of_people_following, 0)
         .ok_if(isProtag(0), nowAt(0, 1), isUnknownLoc(1))
         .sets_up(isParanoid(0), nowAt(0, 2), isStreets(2)),
 
@@ -220,9 +228,16 @@ narrative_pieces = ([
         .ok_if(isProtag(0), nowAt(0, 1), isStreets(1))
         .sets_up(nowAt(0, 2), isProtagHome(2)),
 
+    MakeBeat("Watches talk show. Guest jokes about ghosting.")
+        .ok_if(isProtag(0), nowAt(0, 1), isProtagHome(1))
+        .express(actions.turn_on, 0, nouns.television)
+        .express(actions.watch_talk_show_about_ghosting)
+        .sets_up(),
+
     MakeBeat("Father missing case")
         .ok_if(isPI(0), nowAt(0, 2), isPIOffice(2), isClient(1), nowAt(1, 2), ProtagonistDefinition.ghost)
         .if_not(hasACase(0))
+        .express(actions.hear_client_father_is_missing)
         .sets_up(hasACase(0), caseOfMissingFather(0), HerosJourney.need),
 
     # TODO: next beat here would be to be fake guest at party and try to
@@ -240,9 +255,13 @@ narrative_pieces = ([
         .sets_up(hasACase(0), HerosJourney.need),
 
     MakeBeat("Takes gun out of desk")
-        .text(prose.takes_gun_out_of_desk)
+        .express(actions.take_gun_out_of_desk, 0)
         .ok_if(nowAt(0, 1), isPIOffice(1), isProtag(0))
         .sets_up(gotAGun(0)),
+
+    #TODO: character arc for awkward version is that he has to make a difficult
+    # decision at climax and be confident
+    #TODO: Character arc for cocky version is?
 
     MakeBeat("Wakes up disheveled. Asks dog to find keys while getting dressed.")
         .ok_if(nowAt(0, 1), isProtagHome(1))

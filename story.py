@@ -11,8 +11,8 @@ any3 = 'any3'
 
 anys = [any1, any2, any3]
 
-ParameterizedSentence = collections.namedtuple(
-    'ParameterizedSentence', 'text_id speaker_param parameters'
+ParameterizedExpression = collections.namedtuple(
+    'ParameterizedExpression', 'action_id parameters'
 )
 
 class MakeBeat:
@@ -20,7 +20,7 @@ class MakeBeat:
         self.debug_text = debug_text
         self.required_concept_tuples = []
         self.prohibitive_concept_tuples = []
-        self.sentences = []
+        self.expressions = []
 
     # One call to ok_if() creates a set of concepts that must all be present for this beat to be
     # allowed. If you want to allow this beat for any of several concepts, just call ok_if()
@@ -36,12 +36,8 @@ class MakeBeat:
         self.prohibitive_concept_tuples.append(tuple(prohibitive_concepts))
         return self
 
-    def text(self, text_id, *parameters):
-        self.sentences.append(ParameterizedSentence(text_id, None, parameters))
-        return self
-
-    def quote(self, text_id, speaker_param, *parameters):
-        self.sentences.append(ParameterizedSentence(text_id, speaker_param, parameters))
+    def express(self, expression, *parameters):
+        self.expressions.append(ParameterizedExpression(expression, parameters))
         return self
 
     def sets_up(self, *output_concepts):
@@ -50,7 +46,7 @@ class MakeBeat:
             self.required_concept_tuples,
             output_concepts,
             self.prohibitive_concept_tuples,
-            self.sentences
+            self.expressions
         )
 
 class NarrativePiece:
@@ -60,11 +56,11 @@ class NarrativePiece:
         required_concept_tuples,
         output_concepts,
         prohibitive_concept_tuples,
-        parameterized_sentences,
+        parameterized_expressions,
     ):
         self.debug_text = debug_text
 
-        self.parameterized_sentences = parameterized_sentences
+        self.parameterized_expressions = parameterized_expressions
 
         self.parameterized_required_concept_tuples = [
             [req.get_parameterized() for req in tup]

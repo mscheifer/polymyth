@@ -26,37 +26,36 @@ class ProseState:
     def __init__(self):
         self.num_sentences_left_till_next_paragraph = 0
 
-    #TODO: should rename this to be parameterized sentences or introduce another
+    #TODO: should rename this to be parameterized expressions or introduce another
     # layer to convert them first.
-    def append(self, sentences, arguments):
+    def append(self, expressions, arguments):
         # TODO: any logic about varying word choice and such
 
         output = ''
 
-        for sentence in sentences:
-            if (
-                sentence.speaker_param is not None or
-                self.num_sentences_left_till_next_paragraph == 0
-            ):
+        for expression in expressions:
+            is_quote = False #TODO: convert "say" actions to quotations
+            if (is_quote or self.num_sentences_left_till_next_paragraph == 0):
                 separator = "\n\n"
                 self.num_sentences_left_till_next_paragraph = 4
             else:
                 separator = ' '
 
+            #TODO support actions and descriptions and everything somehow
             formatted_string = prose.format(
-                english.text[sentence.text_id], arguments
+                english.actions_text[expression.action_id], arguments
             )
 
             #TODO: if we just emitted a quote from the same speaker, just
             # continue that in the same paragraph, only closing the quotation
             # marks when we switch to description or another speaker.
 
-            if sentence.speaker_param is not None:
-                assert sentence.speaker_param in arguments, (
-                    str(sentence.speaker_param) + " not in " + str(arguments) +
-                    " for " + str(sentence.text_id)
+            if is_quote:
+                assert speaker_param in arguments, (
+                    str(speaker_param) + " not in " + str(arguments) +
+                    " for " + str(expression.action_id)
                 )
-                speaker = arguments[sentence.speaker_param]
+                speaker = arguments[speaker_param]
                 formatted_string = (
                     '"' + formatted_string + '" said ' + speaker.name
                 )

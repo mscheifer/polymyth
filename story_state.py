@@ -339,6 +339,11 @@ class StoryState:
             self.used_ideas.update(used_ideas)
             # end update steps
 
+            #TODO: we either gotta also return not just the output args or we
+            # gotta pre-convert the setence paramters and return them with args
+            # because this is breaking if the param referenced in the sentence
+            # isn't part of the output.
+
             return output_args, used_ideas
 
         return None

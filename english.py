@@ -1,7 +1,7 @@
-#TODO Probably the plan that makes the most sense is just to keep writing and 
-# wait until I actually want to re-use some prose to start abstracting.
-
-import prose
+import expression.actions as actions
+import expression.descriptions as descriptions
+import expression.modifiers as modifiers
+import expression.nouns as nouns
 
 # The philosophy here is that the experience will be like Groundhog Day. The
 # beat choices will always give the same output, so it's ok if the same text
@@ -9,106 +9,138 @@ import prose
 # there for minor variations. We do want to avoid the same text appearing again
 # later in the story though.
 
-text = {
-    prose.walks_home_sees_shadows: ("%0:n: walked home in the rain. %0:sp: saw "
-    + "shadows of people following %0:op:."),
-    prose.introduce_pi:
-    "%1:n: leaned back in %1:pp: chair and propped %1:pp: legs up on %1:pp: desk.",
-    prose.pi_on_phone:
-    "%1:pp: fingers twirled the phone cord.",
-    prose.what_are_you_up_to_this_weekend: 
-    "What are you up to this weekend?",
-    prose.just_some_spring_cleaning: 
-    "Oh not much. Just some spring cleaning. You?",
-    prose.needs_to_help_mom: 
-    ("I gotta stop by my mom's place at some point to help her move a " +
-    "bookcase. But that's about it."),
-    prose.ask_out_dinner: 
-    "Say, how would you like to get dinner again Saturday night?",
-    prose.pi_rejected:
-    """"Oh, your going to go help your mom out? That's so nice... Well... I
-    don't think I want to see you again. You seemed very quiet and uncomfortable
-    around me."
-    "Wait now, that was just the first date. I was trying to be respectful. I
-    can be more... I wasn't uncomfortable."
-    "Anyway, I've got to go. Have a nice weekend."
-    Jake put the receiver down and sat up.""",
-    prose.pi_phone_ask_out_after_many_dates: 
-    ("That's what I'm saying. You and me, out on the town again. That sax " +
-    "player you like is playing again at Charlie's."),
-    prose.pi_phone_fight_waiter: 
-    """"Are you going to pick a fight with the waiter again? I'm surprised you
-    think they'll let you back in the place."
-    "I think he and I came to an understanding. Even if not, wouldn't you want
-    to watch me give him a good one, huh? Right in the kisser."
-    "Wow, you've well fixed on this guy. Maybe I should give you space to get to
-    know him." """,
-    prose.pi_phone_cocky: 
-    """"You're real funny, girl. Why don't I come pick you up at 7:00"
-    "How about this. Don't call me again until you've found some decency."
-    "Wait what? Sarah?... Hello?"
-    Jake put the receiver down and twirled his thumbs.""",
-
-    #TODO: character arc for awkward version is that he has to make a difficult
-    # decision at climax and be confident
-    #TODO: Character arc for cocky version is?
-
-    prose.client_walks_in:
-    """He had been drumming his fingers and staring at the wall when he heard a nock on the door.
-    "Come on in"
-    "Good evening Mr Marbury. May I have a seat?"
-    "Please, Ms." He struck out his hand.""",
-    prose.pi_met_client_and_father_once_and_pi_admire_father:
+todo_use_these = [
+    #pi_met_client_and_father_once_and_pi_admire_father:
     """"Goodhall, but we have been aquainted before. You came to my Father's
     60th birthday party 4 years back."
     "Ahh... yes of course. Your father was a great man from all the stories I
     had heard and I was glad to meet him. How is he?" """,
-    prose.father_missing_case:
-    """ "That's just the thing," she took a cigarette holder from her purse and
-    withdrew one. Lighting it with a match. "He may be in trouble."
-    "What kind of trouble"
-    "I don't know. He hasn't been seen in 3 days." """,
-    prose.pi_doesnt_take_confident_client_seriously:
+    #pi_doesnt_take_confident_client_seriously:
     """"Did he go out of town? Take a little vacation."
     "He would never without telling someone." """,
-    prose.father_not_at_san_diego_house_awkward_pi:
+    #father_not_at_san_diego_house_awkward_pi:
     """"Does he own a summer beach house. Somewhere he likes to get away."
     "Yes. A place in San Diego. I went there two days ago. He is not there. And
     again, if he went he would have told me." """,
-    prose.pi_takes_the_case:
+    #pi_takes_the_case:
     """"Ok, ok. Where did you last see him?"
     "At the house for breakfast on Thursday."
     "I guess we can start there." """,
-    prose.awkward_pi_confident_client_fees_and_go_to_client_house:
+    #awkward_pi_confident_client_fees_and_go_to_client_house:
     """She rose from the chair. "Thank you for helping. I drove my car over here. Follow me?"
     "Yes certainly," Jake said getting up. "By the way my fee structure is fourty doll..."
     "Fourty dollars a day plus expenses. I read your sign on the door." She turned and left.
     Jake followed.""",
 
-    prose.i_stopped_caring_what_people_think:
-    "Maybe that would have shook me before I was 10 and stopped caring what people think",
-
-    prose.rolled_their_eyes:
-    "%0:n: rolled their eyes.",
-
-    prose.looked_hurt:
-    "%0:n: frowned and looked away.",
-
-    prose.father_was_dishonest:
+    #father_was_dishonest:
     """"My name is Jake Marbery. I believe you used to work with my father Sam Marbury."
     "Oh yes, I remember him. He did _______ work for a couple years a few decades back."
     "Yeah he had a _______ business back then."
     "That's true. He may have lied about other things but that was true." """,
+]
 
-    prose.takes_gun_out_of_desk:
-    ("%0:n: opened a drawer in %0:pp: desk. %0:sp: withdrew a gun and holstered "
-    + "it under his jacket."),
-
-    prose.opened_shop_late_at_night:
-    "%1:n: opened the shop every day at 10 pm and closed it again at 8 am.",
-    prose.served_late_night_customers:
-    "%1:sp: served taxi drivers, bar tenders and graveyard shift workers.",
+actions_text = {
+    actions.ask_if_want: [
+        "Do you like to",
+        "Do you want to",
+        "How about we",
+        "How would you like to",
+        "Would you like to",
+        "Would you want to",
+    ],
+    actions.ask_to_recount_forgotten_childhood: ("Wait, tell me about our " +
+        "old friends, after school, running in the park. We thought we saw " +
+        "something magical in the woods. I have forgotten now, but you " +
+        "might still remember"),
+    actions.ask_out_after_many_dates: 
+        ("That's what I'm saying. You and me, out on the town again. That sax " +
+        "player you like is playing again at Charlie's."),
+    actions.ask_what_are_you_up_to_this_weekend: 
+        "What are you up to this weekend?",
+    actions.be_cocky_on_phone: 
+        """"You're real funny, girl. Why don't I come pick you up at 7:00"
+        "How about this. Don't call me again until you've found some decency."
+        "Wait what? Sarah?... Hello?"
+        Jake put the receiver down and twirled his thumbs.""",
+    actions.get_rejected:
+        """"Oh, your going to go help your mom out? That's so nice... Well... I
+        don't think I want to see you again. You seemed very quiet and uncomfortable
+        around me."
+        "Wait now, that was just the first date. I was trying to be respectful. I
+        can be more... I wasn't uncomfortable."
+        "Anyway, I've got to go. Have a nice weekend."
+        Jake put the receiver down and sat up.""",
+    actions.hear_client_father_is_missing:
+        """ "That's just the thing," she took a cigarette holder from her purse and
+        withdrew one. Lighting it with a match. "He may be in trouble."
+        "What kind of trouble"
+        "I don't know. He hasn't been seen in 3 days." """,
+    actions.lean_back_in_chair:
+        "leaned back in %1:pp: chair and propped %1:pp: legs up on the desk",
+    actions.look_hurt: "frowned and looked away",
+    actions.open_paper: "cracked open the afternoon Chronicle",
+    actions.read_political_scandal_in_paper:
+        "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL",
+    actions.roll_eyes: "rolled their eyes",
+    actions.say_needs_to_help_mom: ("I gotta stop by my mom's place at some " +
+        "point to help her move a bookcase. But that's about it."),
+    actions.say_oh_not_much:
+        "Oh not much. Just some spring cleaning. You?",
+    actions.see_client_walk_in:
+        """He had been drumming his fingers and staring at the wall when he
+        heard a knock on the door.
+        "Come on in"
+        "Good evening Mr Marbury. May I have a seat?"
+        "Please, Ms." He struck out his hand.""",
+    actions.see_shadows_of_people_following:
+        "saw shadows of people following %op",
+    actions.state_dont_care_what_people_think: ("Maybe that would have shook " +
+        "me before I was 10 and stopped caring what people think"),
+    actions.take_gun_out_of_desk: ("opened a drawer in %0:pp: desk. %0:sp: " +
+        "withdrew a gun and holstered it under his jacket."),
+    actions.talk_about_fight_waiter: 
+        """"Are you going to pick a fight with the waiter again? I'm surprised you
+        think they'll let you back in the place."
+        "I think he and I came to an understanding. Even if not, wouldn't you want
+        to watch me give him a good one, huh? Right in the kisser."
+        "Wow, you've well fixed on this guy. Maybe I should give you space to get to
+        know him." """,
+    actions.turn_on: "turned on the",
+    actions.twirl_phone_cord: "fingers twirled the phone cord",
+    actions.walk_to: "walked",
+    actions.watch_talk_show_about_ghosting: ("The host was in the middle of " +
+        "asking his guest. 'Have you ever ghosted anyone?' 'Well I ghosted my" +
+        " guitar teacher.' Canned laughter."),
 }
+
+descriptions_text = {
+    descriptions.opened_shop_late_at_night:
+        "opened the shop every day at 10 pm and closed it again at 8 am.",
+    descriptions.served_late_night_customers:
+        "served taxi drivers, bar tenders and graveyard shift workers.",
+}
+
+nouns_text = {
+    nouns.home: "home",
+    nouns.on_a_date: [
+        "out to dinner",
+        "on a date",
+    ],
+    nouns.television: "television set",
+}
+
+modifiers_text = {
+    modifiers.again: "again",
+    modifiers.in_rain: "in the rain",
+    modifiers.specific_time: [
+        "Saturday night",
+        "Tuesday morning",
+    ],
+}
+
+speech_patterns = [
+    "Say,", # Start sentences with this when trying to persuade someone
+]
 
 """
 
@@ -139,3 +171,23 @@ looked like she was changing into a different person."""
 #TODO (if awkward PI):
 # How are you?
 # I'm alive, which is pretty engaging
+
+"""
+"Is that you, Jake?"
+He closed then latched the door behind him. Turning to put his hat on the hook
+he replied, "Hey Ma".
+"Jake can you come over here". Her voice was feeble.
+"I'm working on a case, Ma. I'll talk to you later"
+"Jakey wait..."
+He had shut the door to his bedroom and did not hear the end of the sentence.
+"""
+
+"""
+On the right a door was ajar. Miss Ohare walked right passed it to the end of
+the hall. "This is his study" she said, ushering him in.
+Papers were strewn about the desk. Jake stepped over and started to pick one up.
+He heard a muffled voice and turned around. Miss Ohare had left the room. Jake
+heard curt speach and then a door click shut. Miss Ohare returned to the room.
+"What was that?" asked Jake
+"I realized I forgot to shut a window in the other room, that's all."
+"""
