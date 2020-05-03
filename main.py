@@ -3,25 +3,20 @@ import pprint
 import random
 import sys
 
-import prose_state
 import beats.noir
+import english
 import story
 import story_state
 
 if __name__ == '__main__':
     state = story_state.StoryState(beats.noir.free_arguments)
-    prose_state = prose_state.ProseState()
-
-    print("Begin", end='')
+    prose_state = english.ProseState()
 
     stillTelling = True
-
-    count = 0
 
     is_debug = len(sys.argv) > 1 and sys.argv[1] == "-d"
 
     while stillTelling:
-        count = count + 1
         bound_arguments = None
         narrative_piece = None
         
@@ -40,10 +35,14 @@ if __name__ == '__main__':
         else:
             arguments, used_ideas = args_and_used_ideas
 
-            if is_debug or len(narrative_piece.parameterized_expressions) == 0:
-                incremental_output = pprint.pformat(
-                    (narrative_piece, arguments, used_ideas)
-                ) + "\n"
+            if is_debug:
+                incremental_output = prose_state.append_debug(
+                    pprint.pformat((narrative_piece, arguments, used_ideas))
+                )
+            elif len(narrative_piece.parameterized_expressions) == 0:
+                incremental_output = prose_state.append_debug(
+                    "==NO EXP: " + pprint.pformat(narrative_piece) + "=="
+                )
             else:
                 incremental_output = prose_state.append(
                     narrative_piece.parameterized_expressions, arguments

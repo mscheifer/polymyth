@@ -1,7 +1,10 @@
+import random
+
 import expression.actions as actions
 import expression.descriptions as descriptions
 import expression.modifiers as modifiers
 import expression.nouns as nouns
+import prose
 
 # The philosophy here is that the experience will be like Groundhog Day. The
 # beat choices will always give the same output, so it's ok if the same text
@@ -141,6 +144,93 @@ modifiers_text = {
 speech_patterns = [
     "Say,", # Start sentences with this when trying to persuade someone
 ]
+
+# Given story_state, prose used so far, and potential next beats,
+# Return prose for those next beats
+#
+# Could do tricks like, any common prefixes to the next sets of prose can be
+# printed out as normal and then the choices start at the differences. Ending a 
+# sentence and staring a new paragraph is probably a pretty common prefix.
+
+# Question - How much out of order output can happen? Would the next beat
+# possibly want to modify a paragraph that was already output?
+#
+# Answer - I think the only way this will work is if each beat can be described
+# in order. If that means having a sentence end in the middle and then making a
+# choice that's ok, but we can't require describing one beat before another for
+# the prose output to sound good. That would have to be encoded into the beat
+# conditions in that system.
+
+# Question - Should we look at the full story state? Should we look for specific
+# other concepts established earlier? Or should we just look at simple action/
+# descripion/tone data? That would mabey imply removing story_state from the
+# inputs.
+
+num_sentences_in_paragraph = 4
+
+def get_text(text_data, expr_id):
+    text = text_data[expr_id]
+    if isinstance(text, list):
+        #TODO: smarter logic to not repeat the same one too much
+        return random.choice(text)
+    return text
+
+class ProseState:
+    def __init__(self):
+        self.num_sentences_left_till_next_paragraph = num_sentences_in_paragraph
+
+    def append_debug(self, message):
+        output = ""
+        if self.num_sentences_left_till_next_paragraph != num_sentences_in_paragraph:
+            output += "\n" # Jump out because we are in the middle of a paragraph
+        output += message + "\n"
+        return output
+
+    #TODO: should rename this to be parameterized expressions or introduce another
+    # layer to convert them first.
+    def append(self, expressions, arguments):
+        # TODO: any logic about varying word choice and such
+
+        output = ''
+
+        for expression in expressions:
+            is_quote = False #TODO: convert "say" actions to quotations
+            if (is_quote or self.num_sentences_left_till_next_paragraph == 0):
+                separator = "\n\n"
+                self.num_sentences_left_till_next_paragraph = num_sentences_in_paragraph
+            else:
+                separator = ' '
+
+            #TODO use actual different rules for action and description
+            if expression.action_id in actions_text:
+                formatted_string = prose.format(
+                    get_text(actions_text, expression.action_id), arguments
+                )
+            elif expression.action_id in descriptions_text:
+                formatted_string = prose.format(
+                    get_text(descriptions_text, expression.action_id), arguments
+                )
+            else:
+                formatted_string = "ERROR unknown ID: " + expression.action_id
+
+            #TODO: if we just emitted a quote from the same speaker, just
+            # continue that in the same paragraph, only closing the quotation
+            # marks when we switch to description or another speaker.
+
+            if is_quote:
+                assert speaker_param in arguments, (
+                    str(speaker_param) + " not in " + str(arguments) +
+                    " for " + str(expression.action_id)
+                )
+                speaker = arguments[speaker_param]
+                formatted_string = (
+                    '"' + formatted_string + '" said ' + speaker.name
+                )
+
+            output += separator + formatted_string
+            self.num_sentences_left_till_next_paragraph -= 1
+
+        return output
 
 """
 
