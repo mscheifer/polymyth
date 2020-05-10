@@ -11,9 +11,24 @@ any3 = 'any3'
 
 anys = [any1, any2, any3]
 
-ParameterizedExpression = collections.namedtuple(
-    'ParameterizedExpression', 'action_id parameters'
+Expression = collections.namedtuple(
+    'Expression', 'core argument_map modifiers'
 )
+# Convert all parameters to strings so it's easier to compare them with
+# references in output text format strings
+def param_to_string(arg):
+    if isinstance(arg, Object):
+        return arg
+    return str(arg) # if it's not an object, it must be a parameter
+
+class ParameterizedExpression:
+    def __init__(self, core, parameter_map, modifiers):
+        self.core = core
+        self.parameter_map = {
+            expr_param : param_to_string(param)
+            for expr_param, param in parameter_map.items()
+        }
+        self.modifiers = modifiers
 
 class MakeBeat:
     def __init__(self, debug_text):
@@ -36,8 +51,13 @@ class MakeBeat:
         self.prohibitive_concept_tuples.append(tuple(prohibitive_concepts))
         return self
 
-    def express(self, expression, *parameters):
-        self.expressions.append(ParameterizedExpression(expression, parameters))
+    def express(self, expression, parameter_map, *modifiers):
+        assert expression.parameters == tuple(parameter_map.keys()), (
+            str(expression) + " doesn't match " + str(parameter_map)
+        )
+        self.expressions.append(
+            ParameterizedExpression(expression, parameter_map, modifiers)
+        )
         return self
 
     def sets_up(self, *output_concepts):
@@ -48,6 +68,13 @@ class MakeBeat:
             self.prohibitive_concept_tuples,
             self.expressions
         )
+
+class Object:
+    def __init__(self, debug_name=None):
+        self.debug_name = debug_name if debug_name is not None else "some_object"
+
+    def __repr__(self):
+        return "Obj(" + self.debug_name + ")"
 
 class NarrativePiece:
     def __init__(
@@ -80,13 +107,15 @@ class NarrativePiece:
             out.get_parameterized() for out in output_concepts
         ]
 
-        all_prohib_params = set(param
+        all_prohib_params = set(argument
             for concept in itertools.chain.from_iterable(
                 self.parameterized_prohibitive_concept_tuples
             )
-            for param in (
-                list(concept.key_parameters) + list(concept.value_parameters)
+            for argument in (
+                list(concept.key_arguments) + list(concept.value_arguments)
             )
+            # If it's not a concrete object it must be an object parameter
+            if not isinstance(argument, Object)
         )
 
         # Bound params must be used in both prohbited concepts and something
@@ -95,15 +124,15 @@ class NarrativePiece:
             assert (
                 any(
                     param in (
-                        list(param_output_concept.key_parameters) +
-                        list(param_output_concept.value_parameters)
+                        list(param_output_concept.key_arguments) +
+                        list(param_output_concept.value_arguments)
                     )
                     for param_output_concept in self.parameterized_output_concepts
                 ) or
                 any(
                     param in (
-                        list(param_req_concept.key_parameters) +
-                        list(param_req_concept.value_parameters)
+                        list(param_req_concept.key_arguments) +
+                        list(param_req_concept.value_arguments)
                     )
                     for param_req_concepts in self.parameterized_required_concept_tuples
                     for param_req_concept in param_req_concepts
@@ -111,31 +140,11 @@ class NarrativePiece:
                 param in anys
             ), "Cannot use non-any param: " + str(param) + " only in prohibited concepts"
 
-        all_parameterized_concepts = itertools.chain(
-            *self.parameterized_required_concept_tuples,
-            self.parameterized_output_concepts,
-            *self.parameterized_prohibitive_concept_tuples
-        )
-
-        named_param_to_types = collections.defaultdict(set)
-
-        for c in all_parameterized_concepts:
-            for param, param_type in itertools.chain(
-                zip(c.key_parameters, c.concept.key_parameter_types),
-                zip(c.value_parameters, c.concept.value_parameter_types)
-            ):
-                named_param_to_types[param].add(param_type)
-
-        for named_param, types in named_param_to_types.items():
-            assert len(types) == 1, (
-                str(named_param) + " used with more than one type:" + str(types)
-            )
-
     def __repr__(self):
         return self.debug_text
 
 class Concept:
-    # In the common case, value_parameters is empty, so there is only 1 possible
+    # In the common case, num_value_parameters is 0, so there is only 1 possible
     # value for the "key", which means it's just a normal concept established
     # once. If there are value parameters then the concept can be re-established
     # with the same key and different values, replacing the previous state.
@@ -143,26 +152,24 @@ class Concept:
     # is exclusive is whether two parameters can be bound to the same thing
     def __init__(
         self,
-        key_parameter_types,
+        num_key_parameters,
         debug_name=None,
-        value_parameter_types=[],
+        num_value_parameters=0,
         is_exclusive=False
     ):
-        assert isinstance(key_parameter_types, list)
-        assert None not in key_parameter_types
-        assert isinstance(value_parameter_types, list)
-        assert None not in value_parameter_types
-        self.key_parameter_types = key_parameter_types
-        self.value_parameter_types = value_parameter_types
+        self.num_key_parameters = num_key_parameters
+        self.num_value_parameters = num_value_parameters
         self.debug_name = debug_name
         self.is_exclusive = is_exclusive
 
     def get_parameterized(self):
-        assert len(self.key_parameter_types) == 0, (
-             "You must pass in names for the paramters to: " + str(self)
+        assert self.num_key_parameters == 0, (
+             "You must pass in symbols for the " + str(self.num_key_parameters)
+             + " paramters to: " + str(self)
         )
-        assert len(self.value_parameter_types) == 0, (
-             "You must pass in names for the paramters to: " + str(self)
+        assert self.num_value_parameters == 0, (
+             "You must pass in symbols for the " +
+             str(self.num_value_parameters) + " paramters to: " + str(self)
         )
         return _ParameterizedConcept(self, [], [])
 
@@ -187,16 +194,16 @@ class Concept:
         return _ParameterizedConcept(self, key_arguments, variable_arguments)
 
 class _ParameterizedConcept:
-    def __init__(self, concept, key_parameters, value_parameters):
+    def __init__(self, concept, key_arguments, value_arguments):
         self.concept = concept
-        assert None not in key_parameters
-        assert None not in value_parameters
-        assert len(key_parameters) == len(concept.key_parameter_types)
-        assert len(value_parameters) == len(concept.value_parameter_types)
-        # Convert all parameters to strings so it's easier to compare them with
-        # references in output text format strings
-        self.key_parameters = tuple(str(p) for p in key_parameters)
-        self.value_parameters = tuple(str(p) for p in value_parameters)
+        assert None not in key_arguments
+        assert None not in value_arguments
+        assert len(key_arguments) == concept.num_key_parameters
+        assert len(value_arguments) == concept.num_value_parameters
+        self.key_arguments = tuple(param_to_string(p) for p in key_arguments)
+        self.value_arguments = tuple(
+            param_to_string(p) for p in value_arguments
+        )
 
     def get_parameterized(self):
         return self
@@ -204,5 +211,9 @@ class _ParameterizedConcept:
     def __repr__(self):
         return "P-" + str(self.concept)
 
+ContentPack = collections.namedtuple(
+    'ContentPack',
+    'objects pre_established_concepts possible_beats, object_expressions'
+)
 
-story_end = Concept([], "##END##")
+story_end = Concept(0, "##END##")

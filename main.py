@@ -9,7 +9,7 @@ import story
 import story_state
 
 if __name__ == '__main__':
-    state = story_state.StoryState(beats.noir.free_arguments)
+    state = story_state.StoryState([beats.noir.content_pack])
     prose_state = english.ProseState()
 
     stillTelling = True
@@ -20,6 +20,8 @@ if __name__ == '__main__':
         bound_arguments = None
         narrative_piece = None
         
+        #TODO: move this logic into story state, or put content pack logic
+        #separated somewhere else but this should be with that.
         pieces = beats.noir.narrative_pieces.copy()
         random.shuffle(pieces)
         for piece in pieces:
@@ -33,20 +35,18 @@ if __name__ == '__main__':
             print("\n\nerror no next narrative piece found")
             stillTelling = False
         else:
-            arguments, used_ideas = args_and_used_ideas
+            expressions = args_and_used_ideas
 
             if is_debug:
                 incremental_output = prose_state.append_debug(
-                    pprint.pformat((narrative_piece, arguments, used_ideas))
+                    pprint.pformat(narrative_piece)
                 )
             elif len(narrative_piece.parameterized_expressions) == 0:
                 incremental_output = prose_state.append_debug(
                     "==NO EXP: " + pprint.pformat(narrative_piece) + "=="
                 )
             else:
-                incremental_output = prose_state.append(
-                    narrative_piece.parameterized_expressions, arguments
-                )
+                incremental_output = prose_state.append(expressions)
             print(incremental_output, sep='', end='')
             for parameterized_concept in narrative_piece.parameterized_output_concepts:
                 if parameterized_concept.concept is story.story_end:

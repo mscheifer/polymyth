@@ -1,22 +1,22 @@
 from story import Concept
 
 class ProtagonistDefinition:
-    want = Concept([], "want")
-    need = Concept([], "need")
-    lie = Concept([], "lie")
-    ghost = Concept([], "ghost")
+    want = Concept(0, "want")
+    need = Concept(0, "need")
+    lie = Concept(0, "lie")
+    ghost = Concept(0, "ghost")
 
 # The journey steps, these concepts are established at the END of each section
 class HerosJourney:
-    you = Concept([], "You") # get audience to identify with protag
-    need = Concept([], "Need") # Establish need
-    go = Concept([], "Go") # cross threshold
-    search = Concept([], "Search")
-    find = Concept([], "Find") # aka midpoint or meeting with the goddess
-    take = Concept([], "Take")
+    you = Concept(0, "You") # get audience to identify with protag
+    need = Concept(0, "Need") # Establish need
+    go = Concept(0, "Go") # cross threshold
+    search = Concept(0, "Search")
+    find = Concept(0, "Find") # aka midpoint or meeting with the goddess
+    take = Concept(0, "Take")
     # cross threshold back (rescue from without + magic flight)
-    theReturn = Concept([], "Return")
-    change = Concept([], "Change")
+    theReturn = Concept(0, "Return")
+    change = Concept(0, "Change")
 
 # Character arcs =========
 

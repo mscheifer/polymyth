@@ -1,7 +1,9 @@
+from collections import namedtuple
 import random
 
 import expression.actions as actions
 import expression.descriptions as descriptions
+import expression.humans as humans
 import expression.modifiers as modifiers
 import expression.nouns as nouns
 import prose
@@ -78,13 +80,14 @@ actions_text = {
         withdrew one. Lighting it with a match. "He may be in trouble."
         "What kind of trouble"
         "I don't know. He hasn't been seen in 3 days." """,
-    actions.lean_back_in_chair:
-        "leaned back in %1:pp: chair and propped %1:pp: legs up on the desk",
+    actions.lean_back_in_chair: ( "%person:s leaned back in %person:p chair and"
+        + " propped %person:p legs up on the desk"
+    ),
     actions.look_hurt: "frowned and looked away",
-    actions.open_paper: "cracked open the afternoon Chronicle",
+    actions.open_paper: "%person:s cracked open the afternoon Chronicle",
     actions.read_political_scandal_in_paper:
         "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL",
-    actions.roll_eyes: "rolled their eyes",
+    actions.roll_eyes: "%person:s rolled their eyes",
     actions.say_needs_to_help_mom: ("I gotta stop by my mom's place at some " +
         "point to help her move a bookcase. But that's about it."),
     actions.say_oh_not_much:
@@ -96,11 +99,11 @@ actions_text = {
         "Good evening Mr Marbury. May I have a seat?"
         "Please, Ms." He struck out his hand.""",
     actions.see_shadows_of_people_following:
-        "saw shadows of people following %op",
+        "%person:s saw shadows of people following %person:o",
     actions.state_dont_care_what_people_think: ("Maybe that would have shook " +
         "me before I was 10 and stopped caring what people think"),
-    actions.take_gun_out_of_desk: ("opened a drawer in %0:pp: desk. %0:sp: " +
-        "withdrew a gun and holstered it under his jacket."),
+    actions.take_gun_out_of_desk: ("%person:s opened a drawer in %person:p " +
+        "desk. %person:s withdrew a gun and holstered it under his jacket."),
     actions.talk_about_fight_waiter: 
         """"Are you going to pick a fight with the waiter again? I'm surprised you
         think they'll let you back in the place."
@@ -108,9 +111,9 @@ actions_text = {
         to watch me give him a good one, huh? Right in the kisser."
         "Wow, you've well fixed on this guy. Maybe I should give you space to get to
         know him." """,
-    actions.turn_on: "turned on the",
-    actions.twirl_phone_cord: "fingers twirled the phone cord",
-    actions.walk_to: "walked",
+    actions.turn_on: "%person:s turned on the %thing:o",
+    actions.twirl_phone_cord: "%person:s fingers twirled the phone cord",
+    actions.walk_to: "%person:s walked",
     actions.watch_talk_show_about_ghosting: ("The host was in the middle of " +
         "asking his guest. 'Have you ever ghosted anyone?' 'Well I ghosted my" +
         " guitar teacher.' Canned laughter."),
@@ -118,9 +121,9 @@ actions_text = {
 
 descriptions_text = {
     descriptions.opened_shop_late_at_night:
-        "opened the shop every day at 10 pm and closed it again at 8 am.",
+        "%person:s opened the shop every day at 10 pm and closed it again at 8 am.",
     descriptions.served_late_night_customers:
-        "served taxi drivers, bar tenders and graveyard shift workers.",
+        "%person:s served taxi drivers, bar tenders and graveyard shift workers.",
 }
 
 nouns_text = {
@@ -186,9 +189,7 @@ class ProseState:
         output += message + "\n"
         return output
 
-    #TODO: should rename this to be parameterized expressions or introduce another
-    # layer to convert them first.
-    def append(self, expressions, arguments):
+    def append(self, expressions):
         # TODO: any logic about varying word choice and such
 
         output = ''
@@ -201,17 +202,33 @@ class ProseState:
             else:
                 separator = ' '
 
+            argument_text_map = {}
+            for param, argument in expression.argument_map.items():
+                if isinstance(argument, nouns.ProperNoun):
+                    # TODO: logic to determine which pronoun to use or full name
+                    # name = argument.raw_name
+                    # text = prose.CasedWord(name, name, name + "'s")
+                    if argument in humans.men:
+                        text = prose.CasedWord("He", "him", "his")
+                    elif argument in humans.women:
+                        text = prose.CasedWord("She", "her", "her")
+                    else:
+                        assert False, "unknown human object" + str(argument)
+                else:
+                    text = nouns_text[argument_id]
+                argument_text_map[param] = text
+
             #TODO use actual different rules for action and description
-            if expression.action_id in actions_text:
+            if expression.core in actions_text:
                 formatted_string = prose.format(
-                    get_text(actions_text, expression.action_id), arguments
+                    get_text(actions_text, expression.core), argument_text_map
                 )
-            elif expression.action_id in descriptions_text:
+            elif expression.core in descriptions_text:
                 formatted_string = prose.format(
-                    get_text(descriptions_text, expression.action_id), arguments
+                    get_text(descriptions_text, expression.core), argument_text_map
                 )
             else:
-                formatted_string = "ERROR unknown ID: " + expression.action_id
+                formatted_string = "ERROR unknown ID: " + expression.core
 
             #TODO: if we just emitted a quote from the same speaker, just
             # continue that in the same paragraph, only closing the quotation

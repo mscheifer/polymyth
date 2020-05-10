@@ -1,4 +1,4 @@
-_auto_inc_id = 1
+_auto_inc_id = 10000
 
 def get_id():
     global _auto_inc_id
