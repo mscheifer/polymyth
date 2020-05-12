@@ -272,7 +272,9 @@ class StoryState:
         self.used_ideas = set() # ideas that have lead to something
         for content_pack in content_packs:
             for parameterized_concept in content_pack.pre_established_concepts:
-                self.establish_idea(parameterized_concept, {})
+                debug_output = self.establish_idea(parameterized_concept, {})
+                if debug_output is not None:
+                    print(debug_output)
         self.objects = []
         for content_pack in content_packs:
             for obj in content_pack.objects:
@@ -298,12 +300,18 @@ class StoryState:
             tuple(value_arguments)
         )
 
+        debug_output = None
+
         key = idea.get_key()
         if key in self.established_ideas:
             existing_value = self.established_ideas[key].value_arguments
             if existing_value != idea.value_arguments:
-                print("==Replacing", existing_value, "with:", idea, "for next beat==")
+                debug_output = (
+                    "==Replacing" + str(existing_value) + "with:" + str(idea) +
+                    "for next beat=="
+                )
         self.established_ideas[key] = idea
+        return debug_output
 
     def try_update_with_beat(self, narrative_piece):
         for requirements_bound_arguments, used_ideas in get_possible_basis_ideas(
@@ -364,9 +372,13 @@ class StoryState:
             if not self.can_story_end(narrative_piece, used_ideas):
                 continue
 
+            debug_outputs = []
+
             # Now do the update steps becuase our match was succesful
             for parameterized_output_concept in narrative_piece.parameterized_output_concepts:
-                self.establish_idea(parameterized_output_concept, output_args)
+                debug_output = self.establish_idea(parameterized_output_concept, output_args)
+                if debug_output is not None:
+                    debug_outputs.append(debug_output)
 
             self.used_ideas.update(used_ideas)
             # end update steps
@@ -392,7 +404,7 @@ class StoryState:
                 )
                 expressions.append(reified_expression)
 
-            return expressions
+            return expressions, debug_outputs
 
         return None
 
