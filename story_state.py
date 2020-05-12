@@ -375,10 +375,18 @@ class StoryState:
 
             for expression in narrative_piece.parameterized_expressions:
                 expr_args = {}
-                for expr_param, param in expression.parameter_map.items():
-                    obj = all_args[param]
+                for expr_param, arg in expression.parameter_map.items():
+                    if isinstance(arg, story.Object):
+                        obj = arg
+                    else:
+                        assert arg in all_args, (
+                            "Missing " + str(arg) + " for " + str(expression) +
+                            " in " + str(narrative_piece)
+                        )
+                        obj = all_args[arg]
                     expr_arg = self.object_expressions[obj]
                     expr_args[expr_param] = expr_arg
+
                 reified_expression = story.Expression(
                     expression.core, expr_args, expression.modifiers
                 )

@@ -215,7 +215,7 @@ class ProseState:
                     else:
                         assert False, "unknown human object" + str(argument)
                 else:
-                    text = nouns_text[argument_id]
+                    text = nouns_text[argument]
                 argument_text_map[param] = text
 
             #TODO use actual different rules for action and description

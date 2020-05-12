@@ -102,6 +102,7 @@ julie = Object("julie")
 sarah = Object("sarah")
 
 bar = Object("bar")
+on_a_date = Object("bar")
 pi_home = Object("pi_home")
 pi_office = Object("pi_office")
 ramen_shop = Object("ramen_shop")
@@ -115,6 +116,7 @@ objects = [
     sarah,
 
     bar,
+    on_a_date,
     pi_home,
     pi_office,
     ramen_shop,
@@ -146,6 +148,7 @@ object_expressions = {
     julie: humans.woman("Julie"),
     sarah: humans.woman("Sarah"),
     bar: nouns.bar,
+    on_a_date: nouns.on_a_date,
     pi_home: nouns.home,
     pi_office: nouns.office,
     ramen_shop: nouns.ramen_shop,
@@ -168,13 +171,13 @@ narrative_pieces = ([
         .sets_up(isOnPhone(1)),
 
     MakeBeat("PI is awkward, we learn from asking out on phone call")
-        .ok_if(isPI(1), isOnPhone(1))
+        .ok_if(isPI(1), isOnPhone(1), is_character(2))
         .if_not(isCocky(1), wifeDiedRandomly(1))
         .express(actions.ask_what_are_you_up_to_this_weekend, {"person": 1})
         .express(actions.say_oh_not_much, {"person": 2})
         .express(
             actions.ask_if_want,
-            {"asker": 1, "askee": 2, "thing": nouns.on_a_date},
+            {"asker": 1, "askee": 2, "thing": on_a_date},
             modifiers.again,
             modifiers.specific_time
         )
@@ -229,11 +232,11 @@ narrative_pieces = ([
     # problem
     MakeBeat("Client walks in")
         .express(actions.see_client_walk_in, {"person": 0})
-        .if_not(now_at(any1, 2), isClient(any1)) # for any other char
+        .if_not(now_at(any1, pi_office), isClient(any1)) # for any other char
         .if_not(hasACase(0))
         .if_not(isPI(1))
         .ok_if(isPI(0), now_at(0, pi_office))
-        .sets_up(now_at(1, 2), isClient(1)),
+        .sets_up(now_at(1, pi_office), isClient(1)),
 
     MakeBeat("PI tells client they love them. Client goes home. PI leaves")
         .ok_if(

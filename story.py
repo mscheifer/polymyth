@@ -14,6 +14,14 @@ anys = [any1, any2, any3]
 Expression = collections.namedtuple(
     'Expression', 'core argument_map modifiers'
 )
+
+class Object:
+    def __init__(self, debug_name=None):
+        self.debug_name = debug_name if debug_name is not None else "some_object"
+
+    def __repr__(self):
+        return "Obj(" + self.debug_name + ")"
+
 # Convert all parameters to strings so it's easier to compare them with
 # references in output text format strings
 def param_to_string(arg):
@@ -25,10 +33,13 @@ class ParameterizedExpression:
     def __init__(self, core, parameter_map, modifiers):
         self.core = core
         self.parameter_map = {
-            expr_param : param_to_string(param)
-            for expr_param, param in parameter_map.items()
+            expr_param : param_to_string(arg)
+            for expr_param, arg in parameter_map.items()
         }
         self.modifiers = modifiers
+
+    def __repr__(self):
+        return str((self.core, self.parameter_map, self.modifiers))
 
 class MakeBeat:
     def __init__(self, debug_text):
@@ -68,13 +79,6 @@ class MakeBeat:
             self.prohibitive_concept_tuples,
             self.expressions
         )
-
-class Object:
-    def __init__(self, debug_name=None):
-        self.debug_name = debug_name if debug_name is not None else "some_object"
-
-    def __repr__(self):
-        return "Obj(" + self.debug_name + ")"
 
 class NarrativePiece:
     def __init__(
@@ -118,8 +122,9 @@ class NarrativePiece:
             if not isinstance(argument, Object)
         )
 
-        # Bound params must be used in both prohbited concepts and something
-        # else, or they can be one of the specific ANYs.
+        # Bound params must in prohbited concepts must also be used in outputs
+        # or required concepts, or they can be one of the specific ANYs. The
+        # only way a prohibited only param makes sense is with ANY semantics.
         for param in all_prohib_params:
             assert (
                 any(
