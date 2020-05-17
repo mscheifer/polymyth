@@ -8,4 +8,5 @@ class Description:
 
 # habitual behaviors
 opened_shop_late_at_night = Description("person")
+picture_and_last_words = Description("person", "partner")
 served_late_night_customers = Description("person")

@@ -1,4 +1,5 @@
 from collections import namedtuple
+import enum
 
 # Text is a formatted string. Each format specifier starts with a % sign. There
 # is a parameter name (often a number), and then a series of letters describing
@@ -12,44 +13,62 @@ from collections import namedtuple
 #   s - subject
 #   o - object
 #   p - posessive
+#   v - vocative
 
-CasedWord = namedtuple('CasedWord', 'subject_case object_case possessive_case')
+@enum.unique
+class Case(enum.Enum):
+    SUBJECTIVE = 'subject'
+    OBJECTIVE = 'object'
+    POSESSIVE = 'possessive'
+    VOCATIVE = 'vocative'
 
-def format(formatted_text, arguments):
-    assert isinstance(arguments, dict)
+ParameterChunk = namedtuple('ParameterChunk', 'case parameter')
+
+def parse(formatted_text):
     words = formatted_text.split(" ")
-    new_words = []
+    chunks = []
+    current_chunk = ""
     for word in words:
-        to_append = word
         if word.startswith("%") and len(word) > 2:
             colonIndex = word.index(":", 1) # starting from second character
             # arg name is starting from second character up to colon (non
             # inclusive)
-            argumentName = word[1:colonIndex]
-            # part of speech is after colon and is only one character
-            part_of_speach = word[colonIndex + 1 : colonIndex + 2]
+            parameterName = word[1:colonIndex]
 
-            assert argumentName in arguments, (
-                argumentName + " not passed in " + str(arguments) + " for: " +
+            assert len(parameterName) != 0, (
+                "can't have empty argument name for: " + word + " in " +
                 formatted_text
             )
 
+            # part of speech is after colon and is only one character
+            part_of_speach = word[colonIndex + 1 : colonIndex + 2]
+
             if part_of_speach == "s":
-                to_append = arguments[argumentName].subject_case
+                case = Case.SUBJECTIVE
             elif part_of_speach == "o":
-                to_append = arguments[argumentName].object_case
+                case = Case.OBJECTIVE
             elif part_of_speach == "p":
-                to_append = arguments[argumentName].possessive_case
+                case = Case.POSESSIVE
+            elif part_of_speach == "v":
+                case = Case.VOCATIVE
             else:
                 assert False, (
                     "unknown specifier: " + word + " decomposed as " +
-                    argumentName + " " + part_of_speach
+                    parameterName + " " + part_of_speach
                 )
+
+            if len(current_chunk) > 0:
+                chunks.append(current_chunk + " ")
+            chunks.append(ParameterChunk(case, parameterName))
 
             # Add back anything after the format specifier without a space
             # separating, likely punctuation
-            to_append += word[colonIndex + 2:]
+            current_chunk = word[colonIndex + 2:]
+        else:
+            current_chunk += " " + word
 
-        new_words.append(to_append)
+    if len(current_chunk) > 0:
+        chunks.append(current_chunk)
 
-    return " ".join(new_words)
+    return chunks
+

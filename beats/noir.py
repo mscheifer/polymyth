@@ -42,6 +42,7 @@ selfDefenseKillPerp = Concept(1, "selfDefenseKillPerp")
 # 1st parameter is the detective
 closure = Concept(1, "closure")
 
+is_regular = Concept(1, "isRegular")
 isPI = Concept(1, "isPI")
 isRamenShopOwner = Concept(1, "isRamenShopOwner")
 isFormerCop = Concept(1, "isFormerCop")
@@ -238,6 +239,12 @@ narrative_pieces = ([
         .ok_if(isPI(0), now_at(0, pi_office))
         .sets_up(now_at(1, pi_office), isClient(1)),
 
+    MakeBeat("Regular's father is missing")
+        .express(actions.see_regular_walk_in, {"owner": 0, "regular": 1})
+        .express(actions.hear_regular_father_is_missing, {"owner": 0, "regular": 1})
+        .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop), is_character(1))
+        .sets_up(now_at(1, ramen_shop), is_regular(1), caseOfMissingFather(0)),
+
     MakeBeat("PI tells client they love them. Client goes home. PI leaves")
         .ok_if(
             isPI(0),
@@ -269,7 +276,7 @@ narrative_pieces = ([
     # straight to being home
 
     MakeBeat("#0 Walks home in the rain. Sees shadows of people following them.")
-        .express(actions.walk_to, {"person": 0}, nouns.home, modifiers.in_rain)
+        .express(actions.walk_to, {"person": 0, "to": pi_home}, modifiers.in_rain)
         .express(actions.see_shadows_of_people_following, {"person": 0})
         .ok_if(isProtag(0), now_at(0, unknown_location))
         .sets_up(isParanoid(0), now_at(0, the_streets)),
@@ -359,6 +366,10 @@ narrative_pieces = ([
     MakeBeat("Finds paper with non-sensical phrases.")
         .ok_if(foundDeadFather(0), HerosJourney.go)
         .sets_up(heardCodedWords),
+
+    MakeBeat("Sees missing father on street and follows to seedy bar")
+        .ok_if(isRamenShopOwner(0), now_at(0, the_streets))
+        .sets_up(now_at(0, bar)),
 
     MakeBeat("Goes to seedy bar.")
         .ok_if(fatherHungOutAtBar(), isPI(0))
@@ -472,9 +483,11 @@ narrative_pieces = ([
         .sets_up(story_end),
 
     MakeBeat("Wife died suddenly. Her last words didn't mean anything.")
+        .express(descriptions.picture_and_last_words, { "person": 1, "partner": 2 })
         .if_not(wifeDiedRandomly(any1))
         .if_not(ProtagonistDefinition.ghost)
         .if_not(isAwkward(1))
+        .ok_if(is_character(2))
         .sets_up(wifeDiedRandomly(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Wife last words become meaningful.")

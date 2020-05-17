@@ -45,14 +45,14 @@ todo_use_these = [
 ]
 
 actions_text = {
-    actions.ask_if_want: [
+    actions.ask_if_want: (
         "Do you like to",
         "Do you want to",
         "How about we",
         "How would you like to",
         "Would you like to",
         "Would you want to",
-    ],
+    ),
     actions.ask_to_recount_forgotten_childhood: ("Wait, tell me about our " +
         "old friends, after school, running in the park. We thought we saw " +
         "something magical in the woods. I have forgotten now, but you " +
@@ -80,11 +80,20 @@ actions_text = {
         withdrew one. Lighting it with a match. "He may be in trouble."
         "What kind of trouble"
         "I don't know. He hasn't been seen in 3 days." """,
+    actions.hear_regular_father_is_missing:
+        """%regular:p movements seemed slower than normal, %owner:s noticed.
+        %owner:s stopped drumming %owner:p fingers.
+        "Have you seen my father," %regular:s asked.
+        "Not for a few weeks."
+        "Ok, sorry to bother you."
+        "Is something wrong?"
+        "...He didn't come home last night. I'm worried he fell down somewhere.
+        """,
     actions.lean_back_in_chair: ( "%person:s leaned back in %person:p chair and"
-        + " propped %person:p legs up on the desk"
+        + " propped %person:p legs up on the desk."
     ),
     actions.look_hurt: "frowned and looked away",
-    actions.open_paper: "%person:s cracked open the afternoon Chronicle",
+    actions.open_paper: "%person:s cracked open the afternoon Chronicle.",
     actions.read_political_scandal_in_paper:
         "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL",
     actions.roll_eyes: "%person:s rolled their eyes",
@@ -92,18 +101,26 @@ actions_text = {
         "point to help her move a bookcase. But that's about it."),
     actions.say_oh_not_much:
         "Oh not much. Just some spring cleaning. You?",
-    actions.see_client_walk_in:
-        """He had been drumming his fingers and staring at the wall when he
-        heard a knock on the door.
-        "Come on in"
-        "Good evening Mr Marbury. May I have a seat?"
-        "Please, Ms." He struck out his hand.""",
+    actions.see_client_walk_in: [
+        ("%person:s had been drumming %person:p fingers and staring at the wall"
+        + " when %person:s heard a knock on the door."),
+        "Come on in",
+        '"Good evening Mr Marbury. May I have a seat?"',
+        '"Please, Ms." %person:s struck out %person:p hand.',
+    ],
+    actions.see_regular_walk_in: [
+        ("%owner:s had been drumming %owner:p fingers and staring at the wall "
+        + "when %owner:s heard a customer walk in."),
+        "It was %regular:o, a regular.",
+    ],
     actions.see_shadows_of_people_following:
         "%person:s saw shadows of people following %person:o",
     actions.state_dont_care_what_people_think: ("Maybe that would have shook " +
         "me before I was 10 and stopped caring what people think"),
-    actions.take_gun_out_of_desk: ("%person:s opened a drawer in %person:p " +
-        "desk. %person:s withdrew a gun and holstered it under his jacket."),
+    actions.take_gun_out_of_desk: [
+        "%person:s opened a drawer in %person:p desk.",
+        "%person:s withdrew a gun and holstered it under his jacket.",
+    ],
     actions.talk_about_fight_waiter: 
         """"Are you going to pick a fight with the waiter again? I'm surprised you
         think they'll let you back in the place."
@@ -112,8 +129,8 @@ actions_text = {
         "Wow, you've well fixed on this guy. Maybe I should give you space to get to
         know him." """,
     actions.turn_on: "%person:s turned on the %thing:o",
-    actions.twirl_phone_cord: "%person:s fingers twirled the phone cord",
-    actions.walk_to: "%person:s walked",
+    actions.twirl_phone_cord: "%person:p fingers twirled the phone cord",
+    actions.walk_to: "%person:s walked to %to:o",
     actions.watch_talk_show_about_ghosting: ("The host was in the middle of " +
         "asking his guest. 'Have you ever ghosted anyone?' 'Well I ghosted my" +
         " guitar teacher.' Canned laughter."),
@@ -122,16 +139,23 @@ actions_text = {
 descriptions_text = {
     descriptions.opened_shop_late_at_night:
         "%person:s opened the shop every day at 10 pm and closed it again at 8 am.",
+    descriptions.picture_and_last_words: [
+        ("It was a nice picture of %partner:o, the one on %person:p desk, but " +
+        "%person:s didn't look at it often."),
+        ("Everytime %person:s glanced at it %partner:p last words replayed in " +
+        "%person:p head."),
+        '"Swing away, %person:v, swing away"',
+    ],
     descriptions.served_late_night_customers:
         "%person:s served taxi drivers, bar tenders and graveyard shift workers.",
 }
 
 nouns_text = {
     nouns.home: "home",
-    nouns.on_a_date: [
+    nouns.on_a_date: (
         "out to dinner",
         "on a date",
-    ],
+    ),
     nouns.television: "television set",
 }
 
@@ -171,16 +195,25 @@ speech_patterns = [
 
 num_sentences_in_paragraph = 4
 
-def get_text(text_data, expr_id):
+def get_lines(text_data, expr_id):
     text = text_data[expr_id]
-    if isinstance(text, list):
+    if isinstance(text, tuple):
         #TODO: smarter logic to not repeat the same one too much
-        return random.choice(text)
-    return text
+        return [random.choice(text)]
+    if isinstance(text, list):
+        return text
+    assert isinstance(text, str)
+    return [text]
+
+CasedWord = namedtuple('CasedWord', 'subject_case object_case possessive_case vocative_case')
 
 class ProseState:
     def __init__(self):
         self.num_sentences_left_till_next_paragraph = num_sentences_in_paragraph
+
+        self.gender_to_last_character_reffered_to = {
+            "male": None, "female": None,
+        }
 
     def append_debug(self, message):
         output = ""
@@ -189,63 +222,102 @@ class ProseState:
         output += message + "\n"
         return output
 
+    def get_noun_cased_word_and_update_context(self, noun):
+        if isinstance(noun, nouns.ProperNoun):
+            if noun in humans.men:
+                gender = "male"
+            elif noun in humans.women:
+                gender = "female"
+            else:
+                assert False, "unknown human object" + str(noun)
+            name = noun.raw_name
+            if self.gender_to_last_character_reffered_to[gender] is not noun:
+                self.gender_to_last_character_reffered_to[gender] = noun
+                return CasedWord(name, name, name + "'s", name)
+            else:
+                if gender == "male":
+                    return CasedWord("he", "him", "his", name)
+                elif gender == "female":
+                    return CasedWord("she", "her", "her", name)
+                else:
+                    assert False
+        assert noun in nouns_text, (
+            str(noun) + " not in map for " + str(expression)
+        )
+        raw_noun = nouns_text[noun]
+        if isinstance(raw_noun, tuple):
+            #TODO: smarter logic to not repeat the same one too much
+            raw_noun = random.choice(raw_noun)
+        return CasedWord(raw_noun, raw_noun, raw_noun + "'s", raw_noun)
+
     def append(self, expressions):
         # TODO: any logic about varying word choice and such
 
         output = ''
 
         for expression in expressions:
-            is_quote = False #TODO: convert "say" actions to quotations
-            if (is_quote or self.num_sentences_left_till_next_paragraph == 0):
-                separator = "\n\n"
-                self.num_sentences_left_till_next_paragraph = num_sentences_in_paragraph
-            else:
-                separator = ' '
-
-            argument_text_map = {}
-            for param, argument in expression.argument_map.items():
-                if isinstance(argument, nouns.ProperNoun):
-                    # TODO: logic to determine which pronoun to use or full name
-                    # name = argument.raw_name
-                    # text = prose.CasedWord(name, name, name + "'s")
-                    if argument in humans.men:
-                        text = prose.CasedWord("He", "him", "his")
-                    elif argument in humans.women:
-                        text = prose.CasedWord("She", "her", "her")
-                    else:
-                        assert False, "unknown human object" + str(argument)
-                else:
-                    text = nouns_text[argument]
-                argument_text_map[param] = text
-
             #TODO use actual different rules for action and description
             if expression.core in actions_text:
-                formatted_string = prose.format(
-                    get_text(actions_text, expression.core), argument_text_map
-                )
+                text_map = actions_text
             elif expression.core in descriptions_text:
-                formatted_string = prose.format(
-                    get_text(descriptions_text, expression.core), argument_text_map
-                )
+                text_map = descriptions_text
             else:
-                formatted_string = "ERROR unknown ID: " + expression.core
+                assert False, "ERROR unknown ID: " + expression.core
 
-            #TODO: if we just emitted a quote from the same speaker, just
-            # continue that in the same paragraph, only closing the quotation
-            # marks when we switch to description or another speaker.
+            is_quote = False #TODO: convert "say" actions to quotations
 
-            if is_quote:
-                assert speaker_param in arguments, (
-                    str(speaker_param) + " not in " + str(arguments) +
-                    " for " + str(expression.action_id)
-                )
-                speaker = arguments[speaker_param]
-                formatted_string = (
-                    '"' + formatted_string + '" said ' + speaker.name
-                )
+            lines = get_lines(text_map, expression.core)
+            sentences = []
+            for line in lines:
+                prose_chunks = prose.parse(line)
 
-            output += separator + formatted_string
-            self.num_sentences_left_till_next_paragraph -= 1
+                sentence = ""
+                for chunk in prose_chunks:
+                    if isinstance(chunk, prose.ParameterChunk):
+                        noun = expression.argument_map[chunk.parameter]
+                        cased_word = (
+                            self.get_noun_cased_word_and_update_context(noun)
+                        )
+                        if chunk.case is prose.Case.SUBJECTIVE:
+                            text = cased_word.subject_case
+                        elif chunk.case is prose.Case.OBJECTIVE:
+                            text = cased_word.object_case
+                        elif chunk.case is prose.Case.POSESSIVE:
+                            text = cased_word.possessive_case
+                        elif chunk.case is prose.Case.VOCATIVE:
+                            text = cased_word.vocative_case
+                        else:
+                            assert False, "UNKOWN CASE " + case
+                    else:
+                        text = chunk
+                    sentence += text
+                sentence = sentence[0].upper() + sentence[1:]
+
+                sentences.append(sentence)
+
+                #TODO: if we just emitted a quote from the same speaker, just
+                # continue that in the same paragraph, only closing the quotation
+                # marks when we switch to description or another speaker.
+
+                if is_quote:
+                    assert speaker_param in arguments, (
+                        str(speaker_param) + " not in " + str(arguments) +
+                        " for " + str(expression.action_id)
+                    )
+                    speaker = arguments[speaker_param]
+                    sentence = (
+                        '"' + sentence + '" said ' + speaker.name
+                    )
+
+            for sentence in sentences:
+                if (is_quote or self.num_sentences_left_till_next_paragraph == 0):
+                    separator = "\n\n"
+                    self.num_sentences_left_till_next_paragraph = num_sentences_in_paragraph
+                else:
+                    separator = ' '
+
+                output += separator + sentence
+                self.num_sentences_left_till_next_paragraph -= 1
 
         return output
 
