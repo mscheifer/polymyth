@@ -1,5 +1,6 @@
 from collections import namedtuple
 import enum
+import re
 
 # Text is a formatted string. Each format specifier starts with a % sign. There
 # is a parameter name (often a number), and then a series of letters describing
@@ -24,24 +25,27 @@ class Case(enum.Enum):
 
 ParameterChunk = namedtuple('ParameterChunk', 'case parameter')
 
+pattern = re.compile(r'(%\w+:.)')
+
 def parse(formatted_text):
-    words = formatted_text.split(" ")
+    split = pattern.split(formatted_text)
+
     chunks = []
     current_chunk = ""
-    for word in words:
-        if word.startswith("%") and len(word) > 2:
-            colonIndex = word.index(":", 1) # starting from second character
+    for part in split:
+        if part.startswith('%') and ':' in part:
+            colonIndex = part.index(":", 1) # starting from second character
             # arg name is starting from second character up to colon (non
             # inclusive)
-            parameterName = word[1:colonIndex]
+            parameterName = part[1:colonIndex]
 
             assert len(parameterName) != 0, (
-                "can't have empty argument name for: " + word + " in " +
+                "can't have empty argument name for: " + part + " in " +
                 formatted_text
             )
 
             # part of speech is after colon and is only one character
-            part_of_speach = word[colonIndex + 1 : colonIndex + 2]
+            part_of_speach = part[colonIndex + 1 : colonIndex + 2]
 
             if part_of_speach == "s":
                 case = Case.SUBJECTIVE
@@ -53,19 +57,19 @@ def parse(formatted_text):
                 case = Case.VOCATIVE
             else:
                 assert False, (
-                    "unknown specifier: " + word + " decomposed as " +
+                    "unknown specifier: " + part + " decomposed as " +
                     parameterName + " " + part_of_speach
                 )
 
             if len(current_chunk) > 0:
-                chunks.append(current_chunk + " ")
+                chunks.append(current_chunk)
             chunks.append(ParameterChunk(case, parameterName))
 
             # Add back anything after the format specifier without a space
             # separating, likely punctuation
-            current_chunk = word[colonIndex + 2:]
+            current_chunk = part[colonIndex + 2:]
         else:
-            current_chunk += " " + word
+            current_chunk += part
 
     if len(current_chunk) > 0:
         chunks.append(current_chunk)
