@@ -3,7 +3,10 @@ from story import Concept
 class ProtagonistDefinition:
     want = Concept(0, "want")
     need = Concept(0, "need")
+    # The lie is what makes the character want the want and prevents them from
+    # knowing they need the need
     lie = Concept(0, "lie")
+    # The ghost is what makes the character believe the lie
     ghost = Concept(0, "ghost")
 
 # The journey steps, these concepts are established at the END of each section

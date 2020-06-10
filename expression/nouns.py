@@ -2,8 +2,9 @@ import ids
 
 class ProperNoun:
     def __init__(self, raw_name):
-        self.id = ids.get_id()
         self.raw_name = raw_name
+    def __repr__(self):
+        return "PN(" + self.raw_name + ")"
 
 bar = ids.get_id()
 home = ids.get_id()

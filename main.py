@@ -1,3 +1,5 @@
+#!/usr/bin/python3.8
+
 import itertools
 import pprint
 import random
@@ -54,6 +56,9 @@ if __name__ == '__main__':
                 if parameterized_concept.concept is story.story_end:
                     stillTelling = False
 
+    #TODO: refactor this to track concepts generated from each beat, and then
+    #track beats that did not lead to anything, as in, at least once concept set
+    #up by the beat lead somewhere.
     for unused_idea in story_state.get_ideas_that_have_lead_nowhere(
         state.established_ideas.values(), state.used_ideas
     ):

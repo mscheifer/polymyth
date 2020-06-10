@@ -17,11 +17,17 @@ import expression.modifiers as modifiers
 import expression.nouns as nouns
 import prose
 
+silly_tone = Concept(0, "sillyTone")
+serious_tone = Concept(0, "seriousTone")
+
+asked_how_was_your_father = Concept(0)
+asked_if_father_left_town = Concept(0)
 caseOfMissingFather = Concept(1, "missingFather")
 
 # 1st parameter is the detective, 2nd is mentor
 # The params are exclusive because you can't get advice from yourself.
 hasGuidance = Concept(2, "hasGuidance", is_exclusive=True)
+doesnt_take_client_seriously = Concept(0)
 
 # 1st parameter is the detective
 inFathersAppartment = Concept(1, "inFathersAppartment")
@@ -83,6 +89,7 @@ satanicCult = Concept(0, "satanicCult")
 secretMessageSinger = Concept(0, "secretMessageSinger")
 foundMotive = Concept(0, "foundMotive")
 heardCodedWords = Concept(0, "heardCodedWords")
+asked_dog_to_find_keys = Concept(0, "askedDogToFindKeys")
 dogCanFindKeys = Concept(0, "dogCanFindKeys")
 knowPerpIsInChinatown = Concept(0, "knowIsInChinatown")
 
@@ -94,8 +101,8 @@ wantsToFightWaiter = Concept(1, "wantsToFightWaiter")
 tripping = Concept(1, "tripping")
 tripyExistentialCrisis = Concept(1, "tripyExistentialCrisis")
 
-# TODO: make stateful
-isOnPhone = Concept(1, "isOnPhone")
+told_to_focus_on_where_people_are = Concept(0, "toldToFocusOnWherePeopleAre")
+saw_missing_father_head_to_bar = Concept(0, "sawMissingFatherHeadToBar")
 
 alan =  Object("alan")
 david = Object("david")
@@ -157,6 +164,14 @@ object_expressions = {
     unknown_location: nouns.unknown_location,
 }
 
+nobody = Object("nobody")
+
+talking_on_phone_concept = Concept(
+    1, "talkingOnPhone", num_value_parameters=1
+)
+def talking_on_phone(character1, character2):
+    return talking_on_phone_concept.current([character1], [character2])
+
 narrative_pieces = ([
     MakeBeat("Introduce PI")
         # Need to establish protagonist before this phase is done
@@ -167,12 +182,13 @@ narrative_pieces = ([
         .sets_up(isProtag(1), isPI(1), now_at(1, pi_office)),
 
     MakeBeat("Introduce PI on phone")
-        .ok_if(isPI(1), now_at(1, pi_office))
+        .ok_if(isPI(1), now_at(1, pi_office), is_character(2))
+        .if_not(now_at(any1, pi_office), isClient(any1))
         .express(actions.twirl_phone_cord, {"person": 1})
-        .sets_up(isOnPhone(1)),
+        .sets_up(talking_on_phone(1,2)),
 
     MakeBeat("PI is awkward, we learn from asking out on phone call")
-        .ok_if(isPI(1), isOnPhone(1), is_character(2))
+        .ok_if(isPI(1), talking_on_phone(1,2))
         .if_not(isCocky(1), wifeDiedRandomly(1))
         .express(actions.ask_what_are_you_up_to_this_weekend, {"person": 1})
         .express(actions.say_oh_not_much, {"person": 2})
@@ -185,19 +201,19 @@ narrative_pieces = ([
         .sets_up(isAwkward(1), needsToHelpMom(1)),
 
     MakeBeat("PI rejected")
-        .ok_if(isAwkward(1))
-        .express(actions.get_rejected, {"person": 1})
+        .ok_if(isAwkward(1), talking_on_phone(1,2))
+        .express(actions.get_rejected, {"pi": 1, "date": 2})
         .sets_up(wasRejectedForDate(1)),
 
     MakeBeat("PI wants to fight waiter")
-        .ok_if(isPI(1), isOnPhone(1))
+        .ok_if(isPI(1), talking_on_phone(1,2))
         .if_not(isAwkward(1))
-        .express(actions.talk_about_fight_waiter, {"person": 1})
+        .express(actions.talk_about_fight_waiter, {"pi": 1, "date": 2})
         .sets_up(askOutAfterManyDates(1)),
 
     MakeBeat("PI is cocky")
-        .ok_if(isPI(1), isOnPhone(1), wantsToFightWaiter(1))
-        .express(actions.be_cocky_on_phone, {"person": 1})
+        .ok_if(isPI(1), talking_on_phone(1,2), wantsToFightWaiter(1))
+        .express(actions.be_cocky_on_phone, {"pi": 1, "date": 2})
         .sets_up(isCocky(1)),
 
     MakeBeat("Introduce Ramen shop owner")
@@ -209,7 +225,16 @@ narrative_pieces = ([
         .sets_up(isProtag(1), isRamenShopOwner(1), now_at(1, ramen_shop)),
 
     #TODO: resolution to this arc is coming to terms with himself "I am as much
-    # as I am"
+    # as I am", he does this by taking the action of going to see his mother and
+    # acknowledging he is what he is. He has to acknowledge that there's some
+    # good / worth in him even though he's below society's accepted level of
+    # normalcy for decency and success. He hasn't seen his mother for 10 years
+    # because he's afraid to tell her that he screwed up his life.
+    #
+    # Alternatively, if he is both he alcoholic and cocky then he should fuck up
+    # the case somehow like getting the father killed at the end of the second
+    # act and then in the 4th act he just admits outloud that he's a fuck up,
+    # that's the growth.
     MakeBeat("Former cop. Kicked off force due to alcoholism. Hates self for"
         + " it.")
         .if_not(ProtagonistDefinition.ghost)
@@ -218,6 +243,7 @@ narrative_pieces = ([
     MakeBeat("Reads political scandal in paper")
         .express(actions.open_paper, {"person": 0})
         .express(actions.read_political_scandal_in_paper, {"person": 0})
+        .if_not(now_at(any1, pi_office), isClient(any1))
         .ok_if(now_at(0, pi_office), isProtag(0))
         .sets_up(politicalScandal),
 
@@ -229,21 +255,30 @@ narrative_pieces = ([
             hasDeadBrother(0), HerosJourney.you, ProtagonistDefinition.ghost
         ),
 
-    # TODO: similar scene but regular customer of ramen shop comes in with
-    # problem
     MakeBeat("Client walks in")
-        .express(actions.see_client_walk_in, {"person": 0})
+        .express(actions.see_client_walk_in, {"pi": 0, "client": 1})
         .if_not(now_at(any1, pi_office), isClient(any1)) # for any other char
         .if_not(hasACase(0))
-        .if_not(isPI(1))
+        .if_not(isPI(1)) # TODO: instead speacial is_same concept
         .ok_if(isPI(0), now_at(0, pi_office))
         .sets_up(now_at(1, pi_office), isClient(1)),
+
+    MakeBeat("Hang up because see client")
+        .express(actions.hang_up, {"person": 0})
+        .ok_if(now_at(1, pi_office), isClient(1), talking_on_phone(0, 1))
+        .sets_up(talking_on_phone(0, nobody)),
 
     MakeBeat("Regular's father is missing")
         .express(actions.see_regular_walk_in, {"owner": 0, "regular": 1})
         .express(actions.hear_regular_father_is_missing, {"owner": 0, "regular": 1})
         .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop), is_character(1))
+        # TODO: instead of saying can't be another ramen shop owner, should have special is_same concept
+        .if_not(caseOfMissingFather(0), isRamenShopOwner(1))
         .sets_up(now_at(1, ramen_shop), is_regular(1), caseOfMissingFather(0)),
+
+    MakeBeat("Closes shop and leaves.")
+        .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop))
+        .sets_up(now_at(0, the_streets)),
 
     MakeBeat("PI tells client they love them. Client goes home. PI leaves")
         .ok_if(
@@ -291,11 +326,38 @@ narrative_pieces = ([
         .express(actions.watch_talk_show_about_ghosting, {"person": 0})
         .sets_up(),
 
+    MakeBeat("Meet client have met before")
+        .ok_if(
+            isPI(0),
+            now_at(0, pi_office),
+            isClient(1),
+            now_at(1, pi_office),
+        )
+        .express(actions.say_met_client_and_father_once_and_admire_father, {"pi": 0, "client": 1})
+        .sets_up(asked_how_was_your_father),
+
     MakeBeat("Father missing case")
-        .ok_if(isPI(0), now_at(0, pi_office), isClient(1), now_at(1, pi_office), ProtagonistDefinition.ghost)
+        .ok_if(
+            isPI(0),
+            now_at(0, pi_office),
+            isClient(1),
+            now_at(1, pi_office),
+            ProtagonistDefinition.ghost
+        )
         .if_not(hasACase(0))
-        .express(actions.hear_client_father_is_missing, {"person": 0})
+        .express(actions.hear_client_father_is_missing, {"pi": 0, "client": 1})
         .sets_up(hasACase(0), caseOfMissingFather(0), HerosJourney.need),
+
+    MakeBeat("Meet client have met before")
+        .ok_if(
+            isPI(0),
+            now_at(0, pi_office),
+            isClient(1),
+            now_at(1, pi_office),
+            caseOfMissingFather(0)
+        )
+        .express(actions.ask_if_father_left_town, {"pi": 0, "client": 1})
+        .sets_up(asked_if_father_left_town, doesnt_take_client_seriously),
 
     # TODO: next beat here would be to be fake guest at party and try to
     # eavesdrop on father talking to shady people
@@ -313,6 +375,9 @@ narrative_pieces = ([
     MakeBeat("Takes gun out of desk")
         .express(actions.take_gun_out_of_desk, {"person": 0})
         .ok_if(now_at(0, pi_office), isProtag(0))
+        #TODO: should use some special concepts to say anbody not the PI rather
+        # than just checking against the client
+        .if_not(now_at(any1, pi_office), isClient(any1))
         .sets_up(gotAGun(0)),
 
     #TODO: character arc for awkward version is that he has to make a difficult
@@ -321,7 +386,16 @@ narrative_pieces = ([
 
     MakeBeat("Wakes up disheveled. Asks dog to find keys while getting dressed.")
         .ok_if(now_at(0, pi_home))
-        .sets_up(dogCanFindKeys),
+        .sets_up(asked_dog_to_find_keys),
+
+    MakeBeat("Has to find keys because dog obviously can't.")
+        .ok_if(asked_dog_to_find_keys)
+        .sets_up(),
+
+    MakeBeat("Dog can actually find keys.")
+        .if_not(serious_tone)
+        .ok_if(asked_dog_to_find_keys)
+        .sets_up(dogCanFindKeys, silly_tone),
 
     MakeBeat("Someone robs Protag")
         .if_not(hasACase(0))
@@ -339,7 +413,7 @@ narrative_pieces = ([
 
     MakeBeat("Has big conspiracy board with yarn and stuff")
         .if_not(hasGuidance(0, any1))
-        .ok_if(now_at(0, pi_office), isProtag(0), hasACase(0), HerosJourney.need)
+        .ok_if(now_at(0, pi_office), isProtag(0), hasACase(0), HerosJourney.go)
         .sets_up(isObsessive(0)),
 
     MakeBeat("Asks old boss for help")
@@ -369,12 +443,14 @@ narrative_pieces = ([
 
     MakeBeat("Sees missing father on street and follows to seedy bar")
         .ok_if(isRamenShopOwner(0), now_at(0, the_streets))
-        .sets_up(now_at(0, bar)),
+        .if_not(saw_missing_father_head_to_bar)
+        .sets_up(now_at(0, bar), saw_missing_father_head_to_bar),
 
     MakeBeat("Goes to seedy bar.")
-        .ok_if(fatherHungOutAtBar(), isPI(0))
-        .ok_if(burglarsHungOutAtBar(), isPI(0))
+        .ok_if(fatherHungOutAtBar(), isProtag(0))
+        .ok_if(burglarsHungOutAtBar(), isProtag(0))
         .if_not(now_at(0, bar))
+        .if_not(HerosJourney.find)
         .sets_up(now_at(0, bar)),
 
     #TODO: if isAwkward(1) scene where someone is talking about a standoff with
@@ -404,7 +480,7 @@ narrative_pieces = ([
 
     # sets up for character change at the end, this is needed to accept
     # that the mentor was a bad guy
-    MakeBeat("Mystery woman says dead father betrayed his own brother and "
+    MakeBeat("Mystery woman says client's father betrayed his own brother and "
         + "you have to accept loss.")
         .ok_if(hasDeadBrother(1), talkedToMysteriousWoman)
         .sets_up(HerosJourney.find),
@@ -413,6 +489,24 @@ narrative_pieces = ([
     MakeBeat("Mystery woman says dead father had no faith but you have to have faith.")
         .ok_if(wifeDiedRandomly(1), talkedToMysteriousWoman, caseOfMissingFather(1))
         .sets_up(HerosJourney.find),
+
+    # sets up for character change at the end
+    MakeBeat("Mystery woman says you are living to much in where people could" +
+        " be. Focus on where they are now.")
+        .ok_if(isFormerCop(1), talkedToMysteriousWoman)
+        .sets_up(told_to_focus_on_where_people_are, HerosJourney.find),
+
+    MakeBeat("Leaves seedy bar.")
+        .ok_if(HerosJourney.find, now_at(0, bar))
+        .sets_up(now_at(0, the_streets)),
+
+    MakeBeat("Calls regular, says saw their father run into bar but lost him")
+        .ok_if(
+            now_at(0, pi_home),
+            told_to_focus_on_where_people_are,
+            saw_missing_father_head_to_bar
+        )
+        .sets_up(),
 
     # TODO: follow up with watching them perform a ritual that fails.
     # TODO: if supernatural established then maybe could be real
@@ -487,7 +581,7 @@ narrative_pieces = ([
         .if_not(wifeDiedRandomly(any1))
         .if_not(ProtagonistDefinition.ghost)
         .if_not(isAwkward(1))
-        .ok_if(is_character(2))
+        .ok_if(is_character(2), now_at(1, pi_office))
         .sets_up(wifeDiedRandomly(1), ProtagonistDefinition.ghost),
 
     MakeBeat("Wife last words become meaningful.")
@@ -532,3 +626,6 @@ narrative_pieces = ([
 content_pack = ContentPack(
     objects, pre_established_concepts, narrative_pieces, object_expressions
 )
+
+# Finds wedding ring and watch on counter, assumes intended to leave family,
+# actually just was about to do the dishes.

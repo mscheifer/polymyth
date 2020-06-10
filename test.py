@@ -1,3 +1,4 @@
+#!/usr/bin/python3.8
 import collections
 import random
 import unittest
@@ -22,11 +23,13 @@ class Test(unittest.TestCase):
         self.assertFalse(util.has_duplicates([203]))
         self.assertFalse(util.has_duplicates([]))
 
-    def test_format(self):
-        sally = TestCharacter("Sally")
-        formatted = prose.format("%person:s is here", {"person": sally})
+    def test_parse(self):
+        parsed = prose.parse("%person:s is here")
 
-        self.assertEqual("Sally is here", formatted)
+        self.assertEqual([
+            prose.ParameterChunk(prose.Case.SUBJECTIVE, "person"),
+            " is here",
+        ], parsed)
 
     def test_is_established_by(self):
         concept = story.Concept(0)
