@@ -2,7 +2,6 @@ import collections
 import itertools
 import random
 
-import util
 import story
 
 def get_randomized_list(l):
@@ -50,9 +49,21 @@ def reify_parameters(concept_args, bound_args):
 # is the required concept understood from the given established ideas map and
 # arguments
 def is_established_by(parameterized_concept, ideas, bound_arguments):
+    reified_key_arguments = reify_parameters(
+        parameterized_concept.key_arguments, bound_arguments
+    )
+
+    if parameterized_concept.concept is story.are_different:
+        assert len(parameterized_concept.value_arguments) == 0
+        assert len(reified_key_arguments) > 0
+        return any(
+            reified_key_arguments[0] is not arg
+            for arg in reified_key_arguments[1:]
+        )
+
     key = (
         parameterized_concept.concept,
-        reify_parameters(parameterized_concept.key_arguments, bound_arguments)
+        reified_key_arguments
     )
 
     if key not in ideas:
@@ -102,49 +113,102 @@ def try_is_established_and_bind(parameterized_concept, idea, args):
 
 # Return arguments to parameters in the required concepts if they are
 # established by the given ideas combo
-def get_bound_args_if_establishes(parameterized_required_concepts, ideas_combo):
+def get_possible_bound_args_if_establishes(
+    special_concepts, normal_concepts, ideas_combo, all_objects
+):
     bound_arguments = {}
 
-    for parameterized_concept, idea in zip(
-        parameterized_required_concepts, ideas_combo
-    ):
+    for parameterized_concept, idea in zip(normal_concepts, ideas_combo):
         if not try_is_established_and_bind(
             parameterized_concept, idea, bound_arguments
         ):
             # this isn't a good combo of ideas and parameters
-            return None
+            return []
 
-    return bound_arguments
+    free_parameters_to_restrictions = collections.defaultdict(set)
+
+    for special_concept in special_concepts:
+        assert len(special_concept.value_arguments) == 0
+        bound_concept_args = []
+        free_params = []
+        for arg in special_concept.key_arguments:
+            if isinstance(arg, story.Object):
+                bound_concept_arg = arg
+            elif arg in bound_arguments:
+                bound_concept_arg = bound_arguments.get(arg)
+            else:
+                free_params.append(arg)
+
+        if special_concept.concept is story.are_different:
+            if (
+                len(bound_concept_args) > 0 and
+                all(
+                    bound_concept_args[0] is concept_arg
+                    for concept_arg in bound_concept_args[1:]
+                )
+            ):
+                return []
+
+            for free_param in free_params:
+                free_parameters_to_restrictions[free_param].update(
+                    bound_concept_args
+                )
+        else:
+            assert False
+
+    free_arg_combos = itertools.product(*(
+        ((free_param, obj) for obj in all_objects if obj not in restrictions)
+        for free_param, restrictions in free_parameters_to_restrictions.items()
+    ))
+
+    return (
+        collections.ChainMap(bound_arguments, dict(free_arg_combo))
+        for free_arg_combo in free_arg_combos
+    )
+
+def separate_special_concepts(parameterized_concepts):
+    special_concepts, normal_concepts = [], []
+
+    for x in parameterized_concepts:
+        concept = x.concept
+        is_special = concept is story.are_different
+        (special_concepts if is_special else normal_concepts).append(x)
+
+    return special_concepts, normal_concepts
 
 # Return a generator of bound arguments and used_ideas
-def get_possible_basis_ideas(narrative_piece, established_ideas):
+def get_possible_basis_ideas(narrative_piece, established_ideas, all_objects):
     # Each possible set of required concepts will become an iterator of all
     # establishing ideas for those concepts.
 
     def get_combo_iterator(parameterized_required_concepts):
         filtered_ideas_per_req = collections.defaultdict(list)
 
+        special_concepts, normal_concepts = separate_special_concepts(
+            parameterized_required_concepts
+        )
+
         for idea in established_ideas.values():
-            for req in parameterized_required_concepts:
+            for req in normal_concepts:
                 if idea.concept == req.concept:
                     filtered_ideas_per_req[req].append(idea)
 
         random_ideas = [
             get_randomized_list(filtered_ideas_per_req[req])
-            for req in parameterized_required_concepts
+            for req in normal_concepts
         ]
 
         combos = itertools.product(*random_ideas)
 
-        def maybe_get_bound_args(combo):
-            return get_bound_args_if_establishes(
-                parameterized_required_concepts, combo
+        def get_possible_bound_args(combo):
+            return get_possible_bound_args_if_establishes(
+                special_concepts, normal_concepts, combo, all_objects
             )
 
         return (
-            (bound_arguments, combo) for bound_arguments, combo in (
-                (maybe_get_bound_args(combo), combo) for combo in combos
-            ) if bound_arguments is not None
+            (possible_bound_arg, combo)
+            for combo in combos
+            for possible_bound_arg in get_possible_bound_args(combo)
         )
 
     combo_iterators = (get_combo_iterator(tup)
@@ -185,25 +249,56 @@ def is_prohibited(narrative_piece, established_ideas, arguments):
 
         return True
 
-    def combo_establishes_prohib_tuple(prohibitive_concept_tuple, combo):
+    def combo_establishes_prohib_tuple(special_concepts, normal_concepts, combo):
         bound_anys = {}
-        for concept, idea in zip(prohibitive_concept_tuple, combo):
+        for concept, idea in zip(normal_concepts, combo):
             if not is_established_by_and_bind_anys(
                 concept, idea, arguments, bound_anys
             ):
                 return False
+
+        for concept in special_concepts:
+            assert len(concept.value_arguments) == 0
+            concept_args = []
+            for arg in concept.key_arguments:
+                if isinstance(arg, story.Object):
+                    conept_arg = arg
+                elif arg in story.anys:
+                    if arg in bound_anys:
+                        concept_arg = bound_anys.get(arg)
+                    else:
+                        assert False, "can this happen?"
+                else:
+                    assert arg in arguments
+                    concept_arg = arguments.get(arg)
+                concept_args.append(concept_arg)
+
+            if concept.concept is story.are_different:
+                if all(
+                    concept_args[0] is concept_arg
+                    for concept_arg in concept_args[1:]
+                ):
+                    return False
+            else:
+                assert False
         return True
 
     for prohibitive_concept_tuple in (
         narrative_piece.parameterized_prohibitive_concept_tuples
     ):
+        special_concepts, normal_concepts = separate_special_concepts(
+            prohibitive_concept_tuple
+        )
+
         ideas = [established_ideas.values() for _ in range(
-            len(prohibitive_concept_tuple)
+            len(normal_concepts)
         )]
         combos = itertools.product(*ideas)
 
         for combo in combos:
-            if combo_establishes_prohib_tuple(prohibitive_concept_tuple, combo):
+            if combo_establishes_prohib_tuple(
+                special_concepts, normal_concepts, combo
+            ):
                 # One of the prohibitive concept tuples is already established
                 return True
 
@@ -235,16 +330,6 @@ def try_get_output_args(narrative_piece, established_ideas, all_non_output_args)
         for output_param in get_all_parameters(output_concept):
             assert output_param in all_non_output_args
             output_args[output_param] = all_non_output_args[output_param]
-
-    found_dup = False
-
-    for output_concept in narrative_piece.parameterized_output_concepts:
-        if output_concept.concept.is_exclusive and util.has_duplicates(output_args.values()):
-            found_dup = True
-
-    if found_dup:
-        # We don't allow selecting the same arg twice if the concept is exclusive
-        return None
 
     # We don't want to establish the same ideas twice otherwise the story beat
     # will seem superflous. This functionality is redundant with prohibited
@@ -315,7 +400,7 @@ class StoryState:
 
     def try_update_with_beat(self, narrative_piece):
         for requirements_bound_arguments, used_ideas in get_possible_basis_ideas(
-            narrative_piece, self.established_ideas
+            narrative_piece, self.established_ideas, self.objects
         ):
             # Parameters from requirements are "bound" and parameters from
             # prohibitive and output concepts are "free"

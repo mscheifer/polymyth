@@ -5,6 +5,7 @@ from story import (
     NarrativePiece,
     Object,
     any1,
+    are_different,
     story_end
 )
 from beats.character_arcs import ProtagonistDefinition, HerosJourney
@@ -25,8 +26,7 @@ asked_if_father_left_town = Concept(0)
 caseOfMissingFather = Concept(1, "missingFather")
 
 # 1st parameter is the detective, 2nd is mentor
-# The params are exclusive because you can't get advice from yourself.
-hasGuidance = Concept(2, "hasGuidance", is_exclusive=True)
+hasGuidance = Concept(2, "hasGuidance")
 doesnt_take_client_seriously = Concept(0)
 
 # 1st parameter is the detective
@@ -34,7 +34,7 @@ inFathersAppartment = Concept(1, "inFathersAppartment")
 # 1st parameter is the detective
 foundDeadFather = Concept(1, "foundDeadFather")
 # 1st parameter is the detective, 2nd param is the perp
-foundEvidenceOfPerp = Concept(2, "foundEvidenceOfPerp", is_exclusive=True)
+foundEvidenceOfPerp = Concept(2, "foundEvidenceOfPerp")
 # 1st parameter is the detective, 2nd param is the perp
 isAtHouse = Concept(2, "isAtHouse")
 # 1st parameter is the perp
@@ -417,7 +417,7 @@ narrative_pieces = ([
         .sets_up(isObsessive(0)),
 
     MakeBeat("Asks old boss for help")
-        .ok_if(hasACase(1), HerosJourney.need)
+        .ok_if(hasACase(1), are_different(1, 2), HerosJourney.need)
         .if_not(isObsessive(1)) # because leads to contradictory endings
         .if_not(isProtag(2))
         .if_not(isClient(2))
@@ -520,7 +520,7 @@ narrative_pieces = ([
         .sets_up(foundMotive),
 
     MakeBeat("Finds evidence criminal mastermind did it.")
-        .ok_if(foundMotive, isObsessive(1))
+        .ok_if(foundMotive, isObsessive(1), are_different(1, 2))
         .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), HerosJourney.take),
 
     MakeBeat("Dog finds keys to free PI.")

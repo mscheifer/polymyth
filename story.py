@@ -153,19 +153,15 @@ class Concept:
     # value for the "key", which means it's just a normal concept established
     # once. If there are value parameters then the concept can be re-established
     # with the same key and different values, replacing the previous state.
-    #
-    # is exclusive is whether two parameters can be bound to the same thing
     def __init__(
         self,
         num_key_parameters,
         debug_name=None,
-        num_value_parameters=0,
-        is_exclusive=False
+        num_value_parameters=0
     ):
         self.num_key_parameters = num_key_parameters
         self.num_value_parameters = num_value_parameters
         self.debug_name = debug_name
-        self.is_exclusive = is_exclusive
 
     def get_parameterized(self):
         assert self.num_key_parameters == 0, (
@@ -220,5 +216,9 @@ ContentPack = collections.namedtuple(
     'ContentPack',
     'objects pre_established_concepts possible_beats, object_expressions'
 )
+
+# This special concept is implemented in the engine. are_different is always
+# established if it's two parameters are different.
+are_different = Concept(2, "ARE DIFFERENT")
 
 story_end = Concept(0, "##END##")

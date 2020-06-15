@@ -6,7 +6,6 @@ import unittest
 import prose
 import story
 import story_state
-import util
 
 objects = [story.Object("charA"), story.Object("charB"), story.Object("charC")]
 
@@ -15,13 +14,6 @@ content_pack = story.ContentPack(objects, [], [], {})
 TestCharacter = collections.namedtuple("TestCharacter", "subject_case")
 
 class Test(unittest.TestCase):
-
-    def test_has_duplicates(self):
-        self.assertTrue(util.has_duplicates([1,2,2]))
-        self.assertTrue(util.has_duplicates([4,4]))
-        self.assertFalse(util.has_duplicates([7,99]))
-        self.assertFalse(util.has_duplicates([203]))
-        self.assertFalse(util.has_duplicates([]))
 
     def test_parse(self):
         parsed = prose.parse("%person:s is here")
@@ -138,9 +130,6 @@ class Test(unittest.TestCase):
         state.established_ideas[idea.get_key()] = idea
 
         self.assertIsNone(state.try_update_with_beat(prohibitedBeat))
-
-        # TODO: test an exclusive and non-exclusive output concept together, that is definitely
-        # broken
 
     def test_try_update_with_beat__linked_reqs(self):
         concept = story.Concept(0)
@@ -282,6 +271,29 @@ class Test(unittest.TestCase):
              .sets_up(story.Concept(0))
         )
         self.assertIsNone(state.try_update_with_beat(beat2))
+
+    def test_try_update_with_beat__are_different(self):
+        concept = story.Concept(1, "c1")
+        concept2 = story.Concept(1, "c2")
+        o_concept = story.Concept(2, "oc1")
+        o_concept2 = story.Concept(2, "oc2")
+
+        state = story_state.StoryState([content_pack])
+        state.establish_idea(concept(objects[0]), {})
+        state.establish_idea(concept2(objects[0]), {})
+
+        beat = (story.MakeBeat('b')
+             .ok_if(concept(1), story.are_different(1,2))
+             .sets_up(o_concept(1,2))
+        )
+        self.assertIsNotNone(state.try_update_with_beat(beat))
+
+        beat2 = (story.MakeBeat('b2')
+             .ok_if(concept(1), concept2(2))
+             .if_not(story.are_different(1,2))
+             .sets_up(o_concept2(1,2))
+        )
+        self.assertIsNotNone(state.try_update_with_beat(beat2))
 
 if __name__ == '__main__':
     random.seed(1234) # for deterministic tests
