@@ -18,7 +18,7 @@ import prose
 todo_use_these = [
     #father_was_dishonest:
     """"My name is Jake Marbery. I believe you used to work with my father Sam Marbury."
-    "Oh yes, I remember him. He did _______ work for a couple years a few decades back."
+    "Oh yes, I remember him. He did _______ work for us for a couple years a few decades back."
     "Yeah he had a _______ business back then."
     "That's true. He may have lied about other things but that was true." """,
 ]
@@ -26,6 +26,34 @@ todo_use_these = [
 Quote = namedtuple("Quote", ["speaker", "text", "tag"], defaults=["said"])
 
 actions_text = {
+    actions.ask_about_match_book_then_meet_mysterious_woman: [
+        Quote("bartender", "What'll it be, friend?"),
+        Quote("pi", "Whiskey sour"),
+        Quote("bartender", "Coming right up."),
+        Quote("pi", "Say, got any matches?"),
+        Quote("bartender", "Of course"),
+        ("The bartender handed %pi:o a book of matches identical to the one " +
+            "from the house."),
+        Quote("pi", "Thanks"),
+        Quote("ml", "What are you investigating now, %pi:v?"),
+        Quote("pi", "%ml:v, why am I not surprised to find you here?"),
+        Quote("ml", "Uhh, because I found this bar before you did?"),
+        Quote("pi", "Why are you looking for this bar?"),
+        Quote("ml", "I'm not looking for this bar I'm just living my life."),
+        Quote("ml", "Why are YOU looking for this bar?"),
+        Quote("pi", "Nevermind, forget it."),
+        Quote("ml", "Come on now. I've been hanging out here for weeks."),
+        Quote("ml", "Now that you know that you have to do your due diligence" +
+            " and talk to me."),
+        "%pi:s eyed %ml:o.",
+        Quote("ml", "Come on. I saw you staring at that matchb book lost in " +
+            "thought. You forgot to pull out a cigarette. Come tell me who " +
+            "you're looking for and I'll tell you if I've seen them."),
+        Quote("pi", "Alright, since you asked so nicely."),
+        "%ml:s went and sat down at a booth.",
+    ],
+    actions.ask_how_are_you:
+        Quote("person", "How are you?"),
     actions.ask_if_want: (
         "Do you like to",
         "Do you want to",
@@ -56,7 +84,7 @@ actions_text = {
         Quote("pi", "By the way my fee structure is fourty doll..."),
         Quote("client", "Fourty dollars a day plus expenses."),
         Quote("client", "I read your sign on the door."),
-        "%client:n turned and left. %pi:s followed.",
+        "%client:s turned and left. %pi:s followed.",
     ],
     actions.ask_to_recount_forgotten_childhood: Quote("person", "Wait, tell " +
         "me about our old friends, after school, running in the park. We " +
@@ -67,6 +95,25 @@ actions_text = {
         "again. That sax player you like is playing again at Charlie's."),
     actions.ask_what_are_you_up_to_this_weekend: 
         Quote("person", "What are you up to this weekend?"),
+    actions.ask_why_you_didnt_know_where_from: [
+        Quote("person1", "Why don't you know where your friend was from?"),
+        Quote("person1", "Didn't he tell you?"),
+        Quote("person2", "Some men are ashamed of their beginnings."),
+    ],
+    actions.avoid_interaction_with_mother: [
+        #TODO: there shouldn't be a diaglog tag here even if this is the first
+        # line for the mother, because we figure out who it is from the next line.
+        Quote("mother", "Is that you, %pi:v?"),
+        "He closed then latched the door behind him.",
+        "He turned to put his hat on the hook.",
+        Quote("pi", "Hey Ma", tag="replied"),
+        Quote("mother", "%pi:v can you come over here"),
+        "%mother:p voice was feeble.", # TODO: way to have this grouped with previous line?
+        Quote("pi", "I'm working on a case, Ma. I'll talk to you later"),
+        Quote("mother", "%pi:v wait..."), #TODO: use diminuitive name like "jakey" for "jake"
+        ("He had shut the door to his bedroom and did not hear the end of the " +
+            "sentence."),
+    ],
     actions.be_cocky_on_phone: [
         #TODO: diminutive genered noun here instead of always 'girl'
         Quote("pi", "You're real funny, girl. Why don't I come pick you up at" +
@@ -75,6 +122,75 @@ actions_text = {
         " some decency."),
         Quote("pi", "Wait what? %date:v?... Hello?"),
         "%:pi:n put the receiver down and twirled his thumbs.",
+    ],
+    actions.close_ramen_shop: [
+        "When the sun started to come up %owner:s locked up and headed out."
+    ],
+    actions.encounter_sibyl: [
+        Quote("sibyl", "I have 3 volumes of meeting notes from your father's " +
+            "company."),
+        Quote("sibyl", "I know you're digging in and would want to look at " +
+            "these."),
+        Quote("sibyl", "I'll let you have them for a price."),
+        Quote("client", "How much?"),
+        Quote("sibyl", "100,000 dollars"),
+        Quote("sibyl", "Hell no, I can't afford that. What about 5,000 " +
+            "dollars?"),
+        Quote("sibyl", "100,000 dollars or no deal"),
+        Quote("client", "10,000 but I won't go higher than that."),
+        Quote("sibyl", "I'm not budging"),
+        Quote("client", "What use are they to you?"),
+        Quote("client", "If you don't take my offer you'll have nothing."),
+        Quote("sibyl", "...you're right. They're of no use to me."),
+        "%sibyl:s took out a lighter and lit the corner of one volume.",
+        Quote("client", "What are you doing?"),
+        "%sibyl said nothing.",
+        "%sibyl dropped the volume on the ground and stamped out the flames " +
+            "with her foot.",
+        Quote("sibyl", "100,000 dollars for the remaining two volumes"),
+        Quote("client", "Hell no"),
+        "%sibyl:s took a second volume and lit it.",
+        Quote("sibyl", "100,000 dollars for the one remaining volume and " +
+            "whatever you can salvage from these two scraps"),
+        "The color drained from %client:p face.",
+        Quote("client", "OK, Ok, yes stop. I'll pay it."),
+    ],
+    actions.enters_seedy_bar: [
+        "%pi:s approached the un-assuming black door.",
+        "%pi:s knocked twice.",
+        "A slot opened at head level revealing a man wearing an eye patch.",
+        Quote("doorman", "What do you want?"),
+        Quote("pi", "Uhh, to come in and have a drink."),
+        Quote("doorman", "Do you have your wits about ye?"),
+        Quote("pi", "Um... Yes?"),
+        Quote("doorman", "Alright come on in."),
+    ],
+    actions.follow_father_inside_then_meet_mysterious_woman: [
+        "The place was almost empty. %pi:s took a quick peak in each booth, " +
+        "then he went back and checked the men's bathroom. The father had " +
+        "vanished. %pi:s sat down at the bar. %pi:s felt suddenly winded.",
+        Quote("pi", "Hey, did you see an old man come in here?"),
+        Quote("bartender", "Umm, yeah an old man came in a few hours ago"),
+        Quote("pi", "No, I mean just now. I followed him in here."),
+        Quote("bartender", "Nah, nobody came in before you."),
+        "The bartender gave %pi:o a quizzical look.",
+        Quote("pi", "Alright, I must have mistook him for someone else."),
+        # TODO: genered causual address
+        Quote("bartender", "You want something to drink man?"),
+        "%bartender:p kept a neutral expression.",
+        Quote("pi", "Uhh, yeah sure. How about a whiskey sour."),
+        # TODO: genered causual address
+        Quote("bartender", "You got it my man."),
+        Quote("ml", "Is this old man in trouble. Does he need you?"),
+        # TODO: man / woman
+        "%pi:s turned. A woman was similing at him from a booth.",
+        Quote("pi", "Maybe. His family seemed to think he's missing."),
+        Quote("ml", "But you just saw him."),
+        Quote("pi", "I thought so. Well I definitely did but I'm not sure he " +
+            "actually came in here. I guess I lost him."),
+        Quote("ml", "Here. Come sit and tell me more."),
+        Quote("ml", "Nothing has happened all night but this is..."),
+        Quote("ml", "Well this is something at least."),
     ],
     actions.get_rejected: [
         Quote("date", "Oh, your going to go help your mom out? That's so " +
@@ -85,6 +201,7 @@ actions_text = {
         Quote("date", "Anyway, I've got to go. Have a nice weekend."),
         "%pi:s put the receiver down and sat up.",
     ],
+    actions.go_home: "%person:s goes home.",
     actions.hang_up: [
         Quote("person", "I gotta go actually, goodbye."),
         "%person:s hung up the phone.",
@@ -97,6 +214,18 @@ actions_text = {
         Quote("pi", "What kind of trouble?"),
         Quote("client", "I don't know. He hasn't been seen in 3 days."),
     ],
+    actions.hear_daughter_has_run_off: [
+        Quote("client", "He's alright."),
+        Quote("client", "He's spending the long weekend in San Diego."),
+        Quote("client", "I've come here to today because I need your help " +
+            "before he get's back."),
+        Quote("pi", "Before he returns on Monday?"),
+        Quote("client", "Yes Monday morning."),
+        Quote("client", "My sister is missing."),
+        Quote("client", "I know who she is with but not where they are."),
+        Quote("client", "If we can find her and bring her back my father " +
+            "doesn't need to know about this."),
+    ],
     actions.hear_regular_father_is_missing: [
         "%regular:p movements seemed slower than normal, %owner:s noticed.",
         "%owner:s stopped drumming %owner:p fingers.",
@@ -106,15 +235,44 @@ actions_text = {
         Quote("owner", "Is something wrong?"),
         Quote("regular", ("...He didn't come home last night. I'm worried he " +
         "fell down somewhere.")),
+        Quote("owner", "Oh, I..."),
+        Quote("regular", "Thanks, anyway"),
+        "%regular:s turned and left.",
+    ],
+    actions.join_mysterious_woman: [
+        "%pi:s left the bar and took a seat across from the woman",
+        # Yeah I usually hang out here and hold court.
     ],
     actions.lean_back_in_chair: ( "%person:s leaned back in %person:p chair and"
         + " propped %person:p legs up on the desk."
     ),
     actions.look_hurt: "%person:s frowned and looked away.",
+    actions.look_in_study: [
+        "On the right a door was ajar.",
+        #TODO: how to have it use formal address like "Miss O'hare" in the
+        #descriptive text?
+        "%client:s walked right passed it to the end of the hall.",
+        Quote("client", "This is his study"),
+        "%client:s ushered him in.",
+        "Papers were strewn about the desk.",
+        "%pi:s stepped over and started to pick one up.",
+        "He heard a muffled voice and turned around.",
+        "%client:s had left the room.", #Here too
+        "%pi:s heard curt speach and then a door click shut.",
+        "%client:s returned to the room.",
+        Quote("pi", "What was that?"),
+        Quote("client", "I realized I forgot to shut a window in the other " +
+            "room. That's all."),
+    ],
     actions.open_paper: "%person:s cracked open the afternoon Chronicle.",
     actions.read_political_scandal_in_paper:
         "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL.",
     actions.roll_eyes: "%person:s rolled their eyes.",
+    actions.say_distrust_moderate_drinkers: [
+        Quote("person", "I like a man who doesn't say when."),
+        Quote("person", "If he's careful not to drink too much then it means " +
+            "he's not to be trusted when he does drink"),
+    ],
     actions.say_met_client_and_father_once_and_admire_father: [
         Quote("client", "Goodhall, but we have been aquainted before. You " +
         "came to my Father's 60th birthday party 4 years back."),
@@ -125,6 +283,30 @@ actions_text = {
         "point to help her move a bookcase. But that's about it."),
     actions.say_oh_not_much:
         "Oh not much. Just some spring cleaning. You?",
+    actions.say_saw_pi_in_a_dream: [
+        Quote("client", "You know. I came to you because I knew you from a " +
+            "dream."),
+        "%pi:s looked at %client:o.",
+        Quote("client", "I dreamed I was riding a horse through the dark of " +
+            "night. I was so tired. I saw a fire in the distance and rode for" +
+            " it. It was your camp. You shared some beans with me..."),
+        Quote("pi", "I was eating a can of beans?"),
+        "%pi:s laughed.",
+        "%client:s laughed too.",
+        Quote("client", "It's silly imagining a city boy eating beans " +
+            "straight from a can. But you don't worry about things like that " +
+            "in a dream."),
+    ],
+    actions.say_they_are_happy_just_being_alive_cooly:
+        Quote("person", "I'm alive, which is pretty engaging"),
+    actions.say_you_can_talk_to_me_about_anything: [
+        Quote("person", "You know you can talk to me about anything"),
+    ],
+    actions.say_you_have_to_drink: [
+        Quote("person", "No, you're cheersing wrong. Peoplw who are pregnant," +
+            " that's ok. If you don't have a legitamite excuse you should be " +
+            "drinking"),
+    ],
     actions.see_client_walk_in: [
         ("%pi:s had been drumming %pi:p fingers and staring at the wall when " +
         "%pi:s heard a knock on the door."),
@@ -161,6 +343,7 @@ actions_text = {
     actions.watch_talk_show_about_ghosting: ("The host was in the middle of " +
         "asking his guest. 'Have you ever ghosted anyone?' 'Well I ghosted my" +
         " guitar teacher.' Canned laughter."),
+    actions.writhe_on_ground: "%person:s collapsed and writhed on the ground.",
 }
 
 descriptions_text = {
@@ -259,7 +442,7 @@ class ProseState:
                 else:
                     assert False
         assert noun in nouns_text, (
-            str(noun) + " not in map for " + str(expression)
+            str(noun) + " not in map"
         )
         raw_noun = nouns_text[noun]
         if isinstance(raw_noun, tuple):
@@ -358,20 +541,6 @@ class ProseState:
 
         return output
 
-"""
-
-Jake and the client walked down a long dusty road.
-"You know. I came to you because I knew you from a dream."
-Jake looked at her.
-"I dreamed I was riding a horse through the darkest night. I was so tired. I saw
-a fire in the distance and rode for it. It was your camp. You shared some beans
-with me..."
-"I was eating a can of beans?" Jake laughed.
-The client laughed too. "It's silly imagining a city boy eating beans straight
-from a can. But you don't worry about things like that in a dream."
-
-"""
-
 #TODO use
 """"Hundreds of letters from your father lie unopened but a single note from
 your sister and you upend your life and your business?" """
@@ -384,47 +553,3 @@ dress. The spotlights moved again, casting layered shadows across her face. It
 looked like she was changing into a different person."""
 #TODO: she starts singing coded message
 
-#TODO (if awkward PI):
-# How are you?
-# I'm alive, which is pretty engaging
-
-"""
-"Is that you, Jake?"
-He closed then latched the door behind him. Turning to put his hat on the hook
-he replied, "Hey Ma".
-"Jake can you come over here". Her voice was feeble.
-"I'm working on a case, Ma. I'll talk to you later"
-"Jakey wait..."
-He had shut the door to his bedroom and did not hear the end of the sentence.
-"""
-
-"""
-On the right a door was ajar. Miss Ohare walked right passed it to the end of
-the hall. "This is his study" she said, ushering him in.
-Papers were strewn about the desk. Jake stepped over and started to pick one up.
-He heard a muffled voice and turned around. Miss Ohare had left the room. Jake
-heard curt speach and then a door click shut. Miss Ohare returned to the room.
-"What was that?" asked Jake
-"I realized I forgot to shut a window in the other room, that's all."
-"""
-
-"""
-"I have 3 volumes of meeting notes from your father's company. I know you're
-digging in and would want to look at these. I'll let you have them for a price."
-"How much?" client
-"100,000 dollars"
-"Hell no, I can't afford that. What about 5,000 dollars"
-"100,000 dollars or no deal"
-"10,000 but I won't go higher than that."
-"I'm not budging"
-"What use are they to you? If you don't take my offer you'll have nothing."
-"...your're right. There of no use to me." She takes out a lighter and lights
-the corner of one volume.
-"What are you doing?"
-She says nothing. She drops the volume on the ground and stamps out the flames
-with her foot. "100,000 dollars for the remaining two volumes"
-"Hell no"
-She takes a second volume and lights it. "100,000 dollars for the one remaining
-volume and whatever you can salvage from these two scraps"
-The color drained from her face. "OK, Ok, yes stop. I'll pay it"
-"""

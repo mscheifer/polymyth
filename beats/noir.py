@@ -9,7 +9,9 @@ from story import (
     story_end
 )
 from beats.character_arcs import ProtagonistDefinition, HerosJourney
-from beats.core import is_character, is_location, now_at
+from beats.core import (
+    is_character, is_location, now_at, scene_can_end, scene_cannot_end
+)
 
 import expression.actions as actions
 import expression.descriptions as descriptions
@@ -18,12 +20,35 @@ import expression.modifiers as modifiers
 import expression.nouns as nouns
 import prose
 
+# Mystery is just sleight of hand with descriptions. You tell the reader the
+# answer but hide it in description or jokes or any writing for some other
+# purpose.
+
 silly_tone = Concept(0, "sillyTone")
 serious_tone = Concept(0, "seriousTone")
+
+# Themes
+# TODO: think more about the difference between big themes where the story poses
+# conflicting arguments and then implies a conclusion, vs the smaller things
+# I've been calling "thematic" where the reality of the story reflect
+# character's emotion or deliberately serve to reinforce their arc. Do we need
+# the big themes for a successful story and is there a better name for the
+# little themes?
+#
+# TODO: is all progress, progress? (a la jurassic park)
 
 asked_how_was_your_father = Concept(0)
 asked_if_father_left_town = Concept(0)
 caseOfMissingFather = Concept(1, "missingFather")
+client_is_hiding_something = Concept(0)
+joined_mysterious_woman_at_booth = Concept(0)
+lives_with = Concept(2, "livesWith")
+is_injured_in_hospital = Concept(1)
+stole_car = Concept(1)
+went_on_a_date_with = Concept(2)
+is_framed = Concept(1)
+must_call_for_alibi = Concept(2)
+run_off_together = Concept(2)
 
 # 1st parameter is the detective, 2nd is mentor
 hasGuidance = Concept(2, "hasGuidance")
@@ -48,22 +73,41 @@ selfDefenseKillPerp = Concept(1, "selfDefenseKillPerp")
 # 1st parameter is the detective
 closure = Concept(1, "closure")
 
+# Backstories (a.k.a The Ghost):
+# A good backstory is when characters blame themselves for something bad, as
+# they must have character growth to overcome it.
+isFormerCop = Concept(1, "isFormerCop")
+isFormerOpiumAdict = Concept(1, "isFormerOpiumAdict")
+hasDeadBrother = Concept(1, "deadBro")
+wifeDiedRandomly = Concept(1, "wifeDiedRandomly")
+
+# Character arcs
+# TODO: Becomes content with meaninglessness of life. Feels empathy for
+# others as they are struggling with the same.
+# TODO: Weakens pacifism. Kills to prevent a mob war
+# TODO: Learns to not be sad about not having something they were never
+# entitled to (like a girlfriend)
+
+is_mother_of = Concept(2, "isMotherOf") # 1st is mom, 2nd is kid
 is_regular = Concept(1, "isRegular")
 isPI = Concept(1, "isPI")
 isRamenShopOwner = Concept(1, "isRamenShopOwner")
-isFormerCop = Concept(1, "isFormerCop")
-isFormerOpiumAdict = Concept(1, "isFormerOpiumAdict")
 isAwkward = Concept(1, "isAwkward")
 isCocky = Concept(1, "isCocky")
-hasDeadBrother = Concept(1, "deadBro")
 hasACase = Concept(1, "hasACase")
 isProtag = Concept(1, "isProtag")
 isCreepy = Concept(1, "isCreepy")
 isPerp = Concept(1, "isPerp")
+is_victim = Concept(1, "isVictim")
 isClient = Concept(1, "isClient")
 isObsessive = Concept(1, "isObessive")
 isParanoid = Concept(1, "isParanoid")
 isInsecure = Concept(1, "isInsecure")
+is_violent = Concept(1, "isViolent")
+is_psychopathic = Concept(1, "isPsychopathic")
+is_amnesiac = Concept(1, "isAmnesiac")
+is_gangster = Concept(1, "isGangster")
+is_gambler = Concept(1, "isGambler")
 
 #TODO: these should be stateful
 isChainedUp = Concept(1, "isChainedUp")
@@ -81,7 +125,12 @@ burglarsHungOutAtBar = Concept(0, "burglarsHungOutAtBar")
 fatherHungOutAtBar = Concept(0, "fatherHungOutAtBar")
 talkedToMysteriousWoman = Concept(0, "talkedToMysteriousWoman")
 
-wifeDiedRandomly = Concept(1, "wifeDiedRandomly")
+# Perp motives
+# Love / sex
+# Greed
+# Revenge
+# Madness
+
 regainFaith = Concept(1, "regainFaith")
 
 politicalScandal = Concept(0, "politicalScandal")
@@ -98,18 +147,34 @@ wasRejectedForDate = Concept(1, "wasRejectedForDate")
 askOutAfterManyDates = Concept(1, "askOutAfterManyDates")
 wantsToFightWaiter = Concept(1, "wantsToFightWaiter")
 
+# Lowest points
+# TODO: PI's junior associate is killed
+# TODO: PI is framed, cops are after him
+# TODO: Finds father who doesn't want to be found ("go home little man")
+# TODO: Thinks it was the client who did it. Confronts her and realizes he was
+# wrong
+# TODO: Fire at PI office or client house destroys all evidence they have found
+# so far
+# TODO: They kidnap someone's child that was shown in first act
+
 tripping = Concept(1, "tripping")
 tripyExistentialCrisis = Concept(1, "tripyExistentialCrisis")
 
 told_to_focus_on_where_people_are = Concept(0, "toldToFocusOnWherePeopleAre")
 saw_missing_father_head_to_bar = Concept(0, "sawMissingFatherHeadToBar")
+was_in_traumatic_awkward_situation = Concept(1, "wasInTraumaticAwkwardSituation")
 
 alan =  Object("alan")
+clementine =  Object("clementine")
 david = Object("david")
 julie = Object("julie")
 sarah = Object("sarah")
 
+doorman = Object("doorman")
+bartender = Object("bartender")
+
 bar = Object("bar")
+client_home = Object("client_home")
 on_a_date = Object("bar")
 pi_home = Object("pi_home")
 pi_office = Object("pi_office")
@@ -122,6 +187,9 @@ objects = [
     david,
     julie,
     sarah,
+
+    doorman,
+    bartender,
 
     bar,
     on_a_date,
@@ -139,10 +207,14 @@ objects = [
 
 pre_established_concepts = [
     is_character(alan),
+    is_character(clementine),
     is_character(david),
     is_character(julie),
     is_character(sarah),
+    is_character(doorman),
+    is_character(bartender),
     is_location(bar),
+    is_location(client_home),
     is_location(pi_home),
     is_location(pi_office),
     is_location(ramen_shop),
@@ -152,9 +224,12 @@ pre_established_concepts = [
 
 object_expressions = {
     alan: humans.man("Alan"),
+    clementine: humans.woman("Clementine"),
     david: humans.man("David"),
     julie: humans.woman("Julie"),
     sarah: humans.woman("Sarah"),
+    doorman: humans.man("The doorman"),
+    bartender: humans.man("The bartender"),
     bar: nouns.bar,
     on_a_date: nouns.on_a_date,
     pi_home: nouns.home,
@@ -222,7 +297,12 @@ narrative_pieces = ([
         # Need to establish protagonist before this phase is done
         .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
-        .sets_up(isProtag(1), isRamenShopOwner(1), now_at(1, ramen_shop)),
+        .sets_up(
+            isProtag(1),
+            isRamenShopOwner(1),
+            now_at(1, ramen_shop),
+            scene_cannot_end
+        ),
 
     #TODO: resolution to this arc is coming to terms with himself "I am as much
     # as I am", he does this by taking the action of going to see his mother and
@@ -259,8 +339,7 @@ narrative_pieces = ([
         .express(actions.see_client_walk_in, {"pi": 0, "client": 1})
         .if_not(now_at(any1, pi_office), isClient(any1)) # for any other char
         .if_not(hasACase(0))
-        .if_not(isPI(1)) # TODO: instead speacial is_same concept
-        .ok_if(isPI(0), now_at(0, pi_office))
+        .ok_if(isPI(0), now_at(0, pi_office), are_different(0, 1))
         .sets_up(now_at(1, pi_office), isClient(1)),
 
     MakeBeat("Hang up because see client")
@@ -271,13 +350,23 @@ narrative_pieces = ([
     MakeBeat("Regular's father is missing")
         .express(actions.see_regular_walk_in, {"owner": 0, "regular": 1})
         .express(actions.hear_regular_father_is_missing, {"owner": 0, "regular": 1})
-        .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop), is_character(1))
-        # TODO: instead of saying can't be another ramen shop owner, should have special is_same concept
-        .if_not(caseOfMissingFather(0), isRamenShopOwner(1))
-        .sets_up(now_at(1, ramen_shop), is_regular(1), caseOfMissingFather(0)),
+        .ok_if(
+            isRamenShopOwner(0),
+            now_at(0, ramen_shop),
+            is_character(1),
+            are_different(0, 1)
+        )
+        .if_not(caseOfMissingFather(0))
+        .sets_up(
+            now_at(1, ramen_shop),
+            is_regular(1),
+            caseOfMissingFather(0),
+            scene_can_end
+        ),
 
     MakeBeat("Closes shop and leaves.")
-        .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop))
+        .express(actions.close_ramen_shop, {"owner": 0})
+        .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop), scene_can_end)
         .sets_up(now_at(0, the_streets)),
 
     MakeBeat("PI tells client they love them. Client goes home. PI leaves")
@@ -301,7 +390,7 @@ narrative_pieces = ([
         .sets_up(kickedOutClient(0,1), now_at(0, unknown_location), HerosJourney.need),
 
     MakeBeat("Don't care what you think, eye roll.")
-        .express(actions.say_i_stopped_caring_what_people_think, {"person": 0})
+        .express(actions.state_dont_care_what_people_think, {"person": 0})
         .express(actions.roll_eyes, {"person": 1})
         .express(actions.look_hurt, {"person": 0})
         .ok_if(isCocky(0))
@@ -317,8 +406,15 @@ narrative_pieces = ([
         .sets_up(isParanoid(0), now_at(0, the_streets)),
 
     MakeBeat("Goes home.")
+        .express(actions.go_home, { "person": 0})
         .ok_if(isProtag(0), now_at(0, the_streets))
         .sets_up(now_at(0, pi_home)),
+
+    MakeBeat("Avoids talking to mom.")
+        .ok_if(isProtag(0), now_at(0, pi_home), is_character(1))
+        .if_not(is_mother_of(any1, 0), are_different(1, any1))
+        .express(actions.avoid_interaction_with_mother, {"pi": 0, "mother": 1})
+        .sets_up(isAwkward(0), lives_with(0,1), is_mother_of(1,0)),
 
     MakeBeat("Watches talk show. Guest jokes about ghosting.")
         .ok_if(isProtag(0), now_at(0, pi_home))
@@ -342,11 +438,25 @@ narrative_pieces = ([
             now_at(0, pi_office),
             isClient(1),
             now_at(1, pi_office),
+            asked_how_was_your_father,
             ProtagonistDefinition.ghost
         )
         .if_not(hasACase(0))
         .express(actions.hear_client_father_is_missing, {"pi": 0, "client": 1})
         .sets_up(hasACase(0), caseOfMissingFather(0), HerosJourney.need),
+
+    MakeBeat("Sister ran off case")
+        .ok_if(
+            isPI(0),
+            now_at(0, pi_office),
+            isClient(1),
+            now_at(1, pi_office),
+            asked_how_was_your_father,
+            ProtagonistDefinition.ghost
+        )
+        .if_not(hasACase(0))
+        .express(actions.hear_daughter_has_run_off, {"pi": 0, "client": 1})
+        .sets_up(hasACase(0), HerosJourney.need),
 
     MakeBeat("Meet client have met before")
         .ok_if(
@@ -372,6 +482,30 @@ narrative_pieces = ([
         .if_not(hasACase(0))
         .sets_up(hasACase(0), HerosJourney.need),
 
+    MakeBeat("Look in study")
+        .ok_if(
+            isPI(0),
+            now_at(0, client_home),
+            isClient(1),
+            now_at(1, client_home),
+            caseOfMissingFather(0)
+        )
+        .express(actions.look_in_study, {"pi": 0, "client": 1})
+        .sets_up(client_is_hiding_something),
+
+    # Hooks
+    MakeBeat("Victim was killed with gun in safe that only victim and " +
+        "daughter knew the combination to")
+        #TODO
+        .sets_up(),
+
+    MakeBeat("PI has partner who goes out first to tail the guy. Get's " +
+        "killed. PI's ghost is that he was sleeping with partner's wife.")
+        #TODO
+        .sets_up(),
+
+    # End hooks
+
     MakeBeat("Takes gun out of desk")
         .express(actions.take_gun_out_of_desk, {"person": 0})
         .ok_if(now_at(0, pi_office), isProtag(0))
@@ -385,7 +519,8 @@ narrative_pieces = ([
     #TODO: Character arc for cocky version is?
 
     MakeBeat("Wakes up disheveled. Asks dog to find keys while getting dressed.")
-        .ok_if(now_at(0, pi_home))
+        .ok_if(now_at(0, pi_home), isCreepy(0))
+        .ok_if(now_at(0, pi_home), isObsessive(0))
         .sets_up(asked_dog_to_find_keys),
 
     MakeBeat("Has to find keys because dog obviously can't.")
@@ -407,7 +542,7 @@ narrative_pieces = ([
         .ok_if(isPI(0), now_at(0, pi_home))
         .sets_up(isFormerOpiumAdict(0), ProtagonistDefinition.ghost),
 
-    MakeBeat("Finds matchbox from burglars")
+    MakeBeat("Finds match book from burglars")
         .ok_if(protagGotRobbed)
         .sets_up(burglarsHungOutAtBar(), HerosJourney.go),
 
@@ -417,6 +552,14 @@ narrative_pieces = ([
         .sets_up(isObsessive(0)),
 
     MakeBeat("Asks old boss for help")
+        # TODO: express that he is asking for help because he has never done a
+        # disappearance/murder before and this is really hard compared to dumb
+        # cheating cases.
+        # TODO: boss must give some advice as if it's relating to a common thing
+        # but really it's very unusal that the father had this thing. This was a
+        # deliberate diversionary tactic by old boss.
+        # TODO: boss must use a metaphor that turns out to be a little too
+        # literal later on, implying the boss had seen the crime scene.
         .ok_if(hasACase(1), are_different(1, 2), HerosJourney.need)
         .if_not(isObsessive(1)) # because leads to contradictory endings
         .if_not(isProtag(2))
@@ -433,7 +576,7 @@ narrative_pieces = ([
         .ok_if(inFathersAppartment(1))
         .sets_up(foundDeadFather(1), HerosJourney.go),
 
-    MakeBeat("Finds matchbox on father's body.")
+    MakeBeat("Finds match book on father's body.")
         .ok_if(foundDeadFather(0), HerosJourney.go)
         .sets_up(fatherHungOutAtBar()),
 
@@ -447,6 +590,7 @@ narrative_pieces = ([
         .sets_up(now_at(0, bar), saw_missing_father_head_to_bar),
 
     MakeBeat("Goes to seedy bar.")
+        .express(actions.enters_seedy_bar, {"pi": 0, "doorman": doorman})
         .ok_if(fatherHungOutAtBar(), isProtag(0))
         .ok_if(burglarsHungOutAtBar(), isProtag(0))
         .if_not(now_at(0, bar))
@@ -474,8 +618,41 @@ narrative_pieces = ([
         .sets_up(),
 
     # TODO: this could also be a fortune teller, so not at the bar
+    MakeBeat("Asks about match book and meets mysterious woman")
+        .ok_if(
+            now_at(0, bar),
+            is_character(1),
+            fatherHungOutAtBar
+        )
+        .ok_if(
+            now_at(0, bar),
+            is_character(1),
+            burglarsHungOutAtBar
+        )
+        .express(
+            actions.ask_about_match_book_then_meet_mysterious_woman,
+            {"pi": 0, "bartender": bartender, "ml": 1}
+        )
+        .express(actions.join_mysterious_woman, {"pi": 0})
+        .sets_up(joined_mysterious_woman_at_booth),
+
+    # TODO: this could also be a fortune teller, so not at the bar
+    MakeBeat("Follows father inside and meets mysterious woman")
+        .ok_if(
+            now_at(0, bar),
+            is_character(1),
+            saw_missing_father_head_to_bar
+        )
+        .express(
+            actions.follow_father_inside_then_meet_mysterious_woman,
+            {"pi": 0, "bartender": bartender, "ml": 1}
+        )
+        .express(actions.join_mysterious_woman, {"pi": 0})
+        .sets_up(joined_mysterious_woman_at_booth),
+
+    # TODO: this could also be a fortune teller, so not at the bar
     MakeBeat("Talks to mysterious woman.")
-        .ok_if(now_at(0, bar))
+        .ok_if(now_at(0, bar), joined_mysterious_woman_at_booth)
         .sets_up(talkedToMysteriousWoman),
 
     # sets up for character change at the end, this is needed to accept
@@ -491,8 +668,8 @@ narrative_pieces = ([
         .sets_up(HerosJourney.find),
 
     # sets up for character change at the end
-    MakeBeat("Mystery woman says you are living to much in where people could" +
-        " be. Focus on where they are now.")
+    MakeBeat("Mystery woman says you are living too much in where people " +
+        "could be. Focus on where they are now.")
         .ok_if(isFormerCop(1), talkedToMysteriousWoman)
         .sets_up(told_to_focus_on_where_people_are, HerosJourney.find),
 
@@ -527,16 +704,53 @@ narrative_pieces = ([
         .ok_if(isChainedUp(0), isPI(0), dogCanFindKeys)
         .sets_up(isFree(0)),
 
+    MakeBeat("Goes home and writhes on ground from awkwardness.")
+        .express(actions.go_home, {"person": 1})
+        .express(actions.writhe_on_ground, {"person": 1})
+        .ok_if(isAwkward(0), was_in_traumatic_awkward_situation(0))
+        .sets_up(now_at(0, pi_home)),
+
     # TODO: need to expand on this
     MakeBeat("Finds evidence his old boss did it.")
         .ok_if(foundMotive, hasGuidance(1,2))
         .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), HerosJourney.take),
+
+    MakeBeat("""Old boss did it because victim was going to screw the town over
+            by forging documents saying that he owned some desert land that was
+            about to be irrigated, just like the victim had done once before
+            long ago to say that a gold mine was on their land instead of public
+            land.""")
+        .ok_if(hasGuidance(1,2), politicalScandal)
+        .sets_up(),
+
+    MakeBeat("""Old boss did it because he was a crooked PI who partnered with
+            the victim and would steer the investiagation away from crooks who
+            payed him off. Victim goes back to a cold case years later and won't
+            drop it so old boss had to kill him.""")
+        .ok_if(hasGuidance(1,2), isPI(3), is_victim(3))
+        .sets_up(),
+
+    MakeBeat("""Old boss did it because he was a mostly-straight PI but covered
+            up for the crimes of his rich brother so that he would keep getting
+            monetary gifts. The brother killed the victim accidentally,
+            recklessly.""")
+        .ok_if(hasGuidance(1,2))
+        .sets_up(),
+
+    MakeBeat("Turns out PI did it.")
+        .ok_if(is_violent(0), is_psychopathic(0))
+        .sets_up(foundEvidenceOfPerp(1,1), isPerp(1), HerosJourney.take),
 
     # TODO: if PI's ghost is a fear of placeA, final showdown should be at
     # placeA
 
     # TODO: if antagonist has pretended to be someone else, final showdown in
     # house of mirrors
+
+    MakeBeat("Client saw PI in a dream")
+        .ok_if(isPI(0), isClient(1), now_at(0, 2), now_at(1, 2), HerosJourney.take)
+        .express(actions.say_saw_pi_in_a_dream, {"pi": 0, "client": 1})
+        .sets_up(),
 
     MakeBeat("Goes to perps place.")
         .ok_if(foundEvidenceOfPerp(1,2), HerosJourney.take)
@@ -611,17 +825,68 @@ narrative_pieces = ([
         + "who says 'go home, little man'.")
         .ok_if(tripyExistentialCrisis(0))
         .sets_up(story_end),
+
+    MakeBeat("Halucinate confession. Thinks it's real. Accuses the person " +
+        "when waking up but then finds out it was just a fever dream. Is " +
+        "forced to appologize.")
+        .ok_if(isPI(0), is_injured_in_hospital(0), isCocky(0))
+        .sets_up(),
+
+    MakeBeat("Amnesiac goes to jewler to ask about ring they are wearing. " +
+        "Amnesiac said they found the ring. Jewler says, 'this is not " +
+        "something you find, this is something you kill for. I want no part " +
+        "of this.")
+        .ok_if(is_amnesiac(0))
+        .sets_up(),
+
+    MakeBeat("1 breaks into car. Takes out a big ring of keys and tries each " +
+        "one by one. Looking calmly straight ahead the whole time.")
+        .ok_if(is_gangster(1))
+        .sets_up(stole_car(1)),
+
+    MakeBeat("Awkward protag is framed for murder so must call date who " +
+        "rejected them to clear themself")
+        #TODO: express call date on phone
+        .express(actions.ask_how_are_you, {"person": 1})
+        .express(
+            actions.say_they_are_happy_just_being_alive_cooly, {"person": 2}
+        )
+        #TODO: express explain situation awkwardly 
+        #TODO: express date helps 1 out
+        .ok_if(went_on_a_date_with(1,2), is_framed(1), isAwkward(1))
+        .sets_up(must_call_for_alibi(1,2)),
+
+    MakeBeat("Takes a risk and asks romantic interest to leave town with him")
+        .ok_if(is_gambler(1), isProtag(1))
+        .sets_up(run_off_together(1,2))
 ])
 
-#TODO: making choices for the PI to be violent -> endping where the PI turns out
-# to be the murderer
+# A theory for cycles in the story:
+#
+# The situations the characters end up in are based on the theme / tone at that
+# point. For exmaple if characters are far from home they can encounter a road
+# that is broken and overgrown.
+#
+# Things happen to the characters based on the situations they are in. For
+# example, one character may trip on the broken pavement.
+#
+# Characters can take action in response to things happening to them or their
+# friends for example one character may go help their friend who tripped get
+# back up.
+#
+# Actions move a character on their arc and change the theme / tone appropriate
+# for that point in their arc. For example if characters have demonstrated that
+# they care about each other / have each others back, they will encounter can
+# encounter a high wall that they have to boost / pull each other up.
+#
+# If some kind of lost characters just climbed up a big wall, they can look
+#  out and see where they are going and no longer feel lost.
 
-#TODO: generally -> character may do thing in scene because of trait -> characters doing actions can
-# create a theme. Setting for action can be caused by another theme.
-# farther from starting point (theme) -> road is broken up and overgrown (description).
-# rocky road, character has no brains (both description) -> character falls into pot hole (action)
-# character fallen down (description) -> dorthy helps them up (action)
-# dorthy helps people (deescription) -> thematic conclusion where she is rewarded (theme)
+# A theory for cycles in the story:
+# 1. Conflict occurs
+# 2. Address physical consequences
+# 3. Confront internal consequences
+# 4. Accept new reality
 
 content_pack = ContentPack(
     objects, pre_established_concepts, narrative_pieces, object_expressions
@@ -629,3 +894,38 @@ content_pack = ContentPack(
 
 # Finds wedding ring and watch on counter, assumes intended to leave family,
 # actually just was about to do the dishes.
+
+# For alcoholic, has to keep reminding himself to be a real person. That the
+# alcoholic is just a zombie. The thoughts pop into his head. When he gets
+# frustrated he thinks having a drink will clear his head. When he succeeds he
+# thinks he should have a drink to celebrate.
+
+#TODO: character arc resolution for obsessive cop should be to quit and get a
+# simple job. "Just work at the fucking hardware store". Simiar to the desire
+# to live a "simple life".
+
+#TODO: scene where character writes a letter that noone will ever read (they
+#assume), or makes a recording noone will ever hear.
+
+#TODO: if character is a gangster, daughter forms relationship with friend, then
+# is forced to whack friend. Daughter can tell character did it or at least
+# is on the same side as those who did. Never speaks to character again.
+
+#TODO: perspective espoused by character: all human tragedy comes from
+# the difference in size between the sexes. What actions does that lead this
+# character to take?
+
+# TODO: one possible ending is that it turns out the missing father had run off
+# with a younger woman to go free all the caged horses in the state (or
+# something else lighthearted like that) because he wanted some excitement in
+# his life. TODO: what is the theme here?
+
+# TODO: character arc for a side character: He spends his whole life taking care
+# of a house and then realizes he doesn't have to. Decides to leave and try
+# other kinds of work. Fits the theme of why we feel duty or obligation to stay
+# where we are / keep doing what we've been doing. Like the sunken cost fallacy
+# for life choices.
+
+# TODO: can we somehow limit the number of plot threads? Would make sense to
+# limit it to 2 or 3 so the story doesn't get too complicated and difficult to
+# end.
