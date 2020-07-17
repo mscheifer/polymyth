@@ -1,5 +1,6 @@
 #!/usr/bin/python3.8
 
+import argparse
 import itertools
 import pprint
 import random
@@ -11,12 +12,19 @@ import story
 import story_state
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument(
+        '-d', '--debug', action='store_true', help='Run in debug mode'
+    )
+
+    args = parser.parse_args()
+
+    is_debug = args.debug
+
     state = story_state.StoryState([beats.noir.content_pack])
     prose_state = english.ProseState()
 
     stillTelling = True
-
-    is_debug = len(sys.argv) > 1 and sys.argv[1] == "-d"
 
     while stillTelling:
         bound_arguments = None
