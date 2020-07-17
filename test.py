@@ -295,6 +295,39 @@ class Test(unittest.TestCase):
         )
         self.assertIsNotNone(state.try_update_with_beat(beat2))
 
+        state = story_state.StoryState([content_pack])
+        state.establish_idea(concept(objects[0]), {})
+
+        beat = (story.MakeBeat('b3')
+             .ok_if(concept(1), concept(2), story.are_different(1,2))
+             .sets_up(o_concept(1,2))
+        )
+        self.assertIsNone(state.try_update_with_beat(beat))
+
+    def test_get_possible_bound_args_if_establishes(self):
+        concept = story.Concept(1, "c1")
+
+        idea = story_state.EstablishedIdea(concept, (objects[0],), ())
+
+        arg_possibilities = story_state.get_possible_bound_args_if_establishes(
+            [story.are_different(1,2)],
+            [concept(1), concept(2)],
+            [idea, idea],
+            objects
+        )
+        # Need to convert to a list to get length becuse it is a generator
+        self.assertEqual(len(list(arg_possibilities)), 0)
+
+        arg_possibilities2 = story_state.get_possible_bound_args_if_establishes(
+            [story.are_different(1,2)],
+            [],
+            [],
+            # No possibilities because we need 2 different objects and only 1 exists
+            objects[0:1]
+        )
+        # Need to convert to a list to get length becuse it is a generator
+        self.assertEqual(len(list(arg_possibilities2)), 0)
+
 if __name__ == '__main__':
     random.seed(1234) # for deterministic tests
     unittest.main()

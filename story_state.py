@@ -118,6 +118,7 @@ def get_possible_bound_args_if_establishes(
 ):
     bound_arguments = {}
 
+    assert len(normal_concepts) == len(ideas_combo)
     for parameterized_concept, idea in zip(normal_concepts, ideas_combo):
         if not try_is_established_and_bind(
             parameterized_concept, idea, bound_arguments
@@ -133,15 +134,15 @@ def get_possible_bound_args_if_establishes(
         free_params = []
         for arg in special_concept.key_arguments:
             if isinstance(arg, story.Object):
-                bound_concept_arg = arg
+                bound_concept_args.append(arg)
             elif arg in bound_arguments:
-                bound_concept_arg = bound_arguments.get(arg)
+                bound_concept_args.append(bound_arguments.get(arg))
             else:
                 free_params.append(arg)
 
         if special_concept.concept is story.are_different:
             if (
-                len(bound_concept_args) > 0 and
+                len(bound_concept_args) > 1 and
                 all(
                     bound_concept_args[0] is concept_arg
                     for concept_arg in bound_concept_args[1:]
@@ -156,10 +157,24 @@ def get_possible_bound_args_if_establishes(
         else:
             assert False
 
-    free_arg_combos = itertools.product(*(
-        ((free_param, obj) for obj in all_objects if obj not in restrictions)
-        for free_param, restrictions in free_parameters_to_restrictions.items()
-    ))
+    object_combinations = itertools.permutations(
+        all_objects, len(free_parameters_to_restrictions.items())
+    )
+
+    unrestricted_free_arg_combos = (
+        zip(object_combination, free_parameters_to_restrictions.items())
+        for object_combination in object_combinations
+    )
+
+    is_restricted = lambda zipped: any(
+        obj in restrictions for obj, (_, restrictions) in zipped
+    )
+
+    free_arg_combos = (
+        ((free_param, obj) for obj, (free_param, _) in zipped)
+        for zipped in unrestricted_free_arg_combos
+        if not is_restricted(zipped)
+    )
 
     return (
         collections.ChainMap(bound_arguments, dict(free_arg_combo))
