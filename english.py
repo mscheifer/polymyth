@@ -361,6 +361,8 @@ descriptions_text = {
 }
 
 nouns_text = {
+    nouns.bartender: "bartender",
+    nouns.doorman: "doorman",
     nouns.home: "home",
     nouns.on_a_date: (
         "out to dinner",
@@ -422,7 +424,17 @@ class ProseState:
         output += message + "\n"
         return output
 
-    def _get_noun_cased_word_and_update_context(self, noun):
+    def _get_noun_cased_word_and_update_context(self, noun, unnamed_title):
+        def get_raw_noun_string(noun):
+            assert noun in nouns_text, (
+                str(noun) + " not in map"
+            )
+            raw_noun = nouns_text[noun]
+            if isinstance(raw_noun, tuple):
+                #TODO: smarter logic to not repeat the same one too much
+                raw_noun = random.choice(raw_noun)
+            return raw_noun
+
         if isinstance(noun, nouns.ProperNoun):
             if noun in humans.men:
                 gender = "male"
@@ -430,7 +442,12 @@ class ProseState:
                 gender = "female"
             else:
                 assert False, "unknown human object" + str(noun)
-            name = noun.raw_name
+
+            name = (
+                noun.raw_name if unnamed_title is None
+                else "the " + get_raw_noun_string(unnamed_title)
+            )
+
             if self.gender_to_last_character_reffered_to[gender] is not noun:
                 self.gender_to_last_character_reffered_to[gender] = noun
                 return CasedWord(name, name, name + "'s", name)
@@ -441,23 +458,20 @@ class ProseState:
                     return CasedWord("she", "her", "her", name)
                 else:
                     assert False
-        assert noun in nouns_text, (
-            str(noun) + " not in map"
-        )
-        raw_noun = nouns_text[noun]
-        if isinstance(raw_noun, tuple):
-            #TODO: smarter logic to not repeat the same one too much
-            raw_noun = random.choice(raw_noun)
+        raw_noun = get_raw_noun_string(noun)
         return CasedWord(raw_noun, raw_noun, raw_noun + "'s", raw_noun)
 
-    def _format_line(self, formatted_line, argument_map):
+    def _format_line(self, formatted_line, argument_map, unnamed_titles):
         prose_chunks = prose.parse(formatted_line.strip())
 
         sentence = ""
         for chunk in prose_chunks:
             if isinstance(chunk, prose.ParameterChunk):
                 noun = argument_map[chunk.parameter]
-                cased_word = self._get_noun_cased_word_and_update_context(noun)
+                unnamed_title = unnamed_titles.get(chunk.parameter) #may be None
+                cased_word = self._get_noun_cased_word_and_update_context(
+                    noun, unnamed_title
+                )
                 if chunk.case is prose.Case.SUBJECTIVE:
                     text = cased_word.subject_case
                 elif chunk.case is prose.Case.OBJECTIVE:
@@ -490,6 +504,7 @@ class ProseState:
 
             lines = get_lines(text_map, expression.core)
             arguments = expression.argument_map
+            unnamed_titles = expression.unnamed
             for line in lines:
                 if isinstance(line, Quote):
                     line_string = line.text
@@ -521,7 +536,9 @@ class ProseState:
                     line_string = line
                     speaker = None
 
-                sentence = self._format_line(line_string, arguments)
+                sentence = self._format_line(
+                    line_string, arguments, unnamed_titles
+                )
 
                 #TODO: I want to interleave descriptive language into pauses in
                 #dialog sometimes

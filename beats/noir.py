@@ -170,9 +170,6 @@ david = Object("david")
 julie = Object("julie")
 sarah = Object("sarah")
 
-doorman = Object("doorman")
-bartender = Object("bartender")
-
 bar = Object("bar")
 client_home = Object("client_home")
 on_a_date = Object("bar")
@@ -187,9 +184,6 @@ objects = [
     david,
     julie,
     sarah,
-
-    doorman,
-    bartender,
 
     bar,
     on_a_date,
@@ -211,8 +205,6 @@ pre_established_concepts = [
     is_character(david),
     is_character(julie),
     is_character(sarah),
-    is_character(doorman),
-    is_character(bartender),
     is_location(bar),
     is_location(client_home),
     is_location(pi_home),
@@ -228,8 +220,6 @@ object_expressions = {
     david: humans.man("David"),
     julie: humans.woman("Julie"),
     sarah: humans.woman("Sarah"),
-    doorman: humans.man("The doorman"),
-    bartender: humans.man("The bartender"),
     bar: nouns.bar,
     on_a_date: nouns.on_a_date,
     pi_home: nouns.home,
@@ -590,9 +580,13 @@ narrative_pieces = ([
         .sets_up(now_at(0, bar), saw_missing_father_head_to_bar),
 
     MakeBeat("Goes to seedy bar.")
-        .express(actions.enters_seedy_bar, {"pi": 0, "doorman": doorman})
-        .ok_if(fatherHungOutAtBar(), isProtag(0))
-        .ok_if(burglarsHungOutAtBar(), isProtag(0))
+        .express(
+            actions.enters_seedy_bar,
+            {"pi": 0, "doorman": 1},
+            unnamed={"doorman": nouns.doorman}
+        )
+        .ok_if(fatherHungOutAtBar(), isProtag(0), is_character(1))
+        .ok_if(burglarsHungOutAtBar(), isProtag(0), is_character(1))
         .if_not(now_at(0, bar))
         .if_not(HerosJourney.find)
         .sets_up(now_at(0, bar)),
@@ -622,16 +616,19 @@ narrative_pieces = ([
         .ok_if(
             now_at(0, bar),
             is_character(1),
+            is_character(2),
             fatherHungOutAtBar
         )
         .ok_if(
             now_at(0, bar),
             is_character(1),
+            is_character(2),
             burglarsHungOutAtBar
         )
         .express(
             actions.ask_about_match_book_then_meet_mysterious_woman,
-            {"pi": 0, "bartender": bartender, "ml": 1}
+            {"pi": 0, "bartender": 2, "ml": 1},
+            unnamed={"bartender": nouns.bartender}
         )
         .express(actions.join_mysterious_woman, {"pi": 0})
         .sets_up(joined_mysterious_woman_at_booth),
@@ -641,11 +638,13 @@ narrative_pieces = ([
         .ok_if(
             now_at(0, bar),
             is_character(1),
+            is_character(2),
             saw_missing_father_head_to_bar
         )
         .express(
             actions.follow_father_inside_then_meet_mysterious_woman,
-            {"pi": 0, "bartender": bartender, "ml": 1}
+            {"pi": 0, "bartender": 2, "ml": 1},
+            unnamed={"bartender": nouns.bartender}
         )
         .express(actions.join_mysterious_woman, {"pi": 0})
         .sets_up(joined_mysterious_woman_at_booth),

@@ -7,7 +7,8 @@ class ProperNoun:
         return "PN(" + self.raw_name + ")"
 
 bar = ids.get_id()
-home = ids.get_id()
+bartender = ids.get_id()
+doorman = ids.get_id()
 home = ids.get_id()
 office = ids.get_id()
 on_a_date = ids.get_id()

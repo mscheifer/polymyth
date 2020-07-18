@@ -500,7 +500,10 @@ class StoryState:
                     expr_args[expr_param] = expr_arg
 
                 reified_expression = story.Expression(
-                    expression.core, expr_args, expression.modifiers
+                    expression.core,
+                    expr_args,
+                    expression.modifiers,
+                    expression.unnamed
                 )
                 expressions.append(reified_expression)
 

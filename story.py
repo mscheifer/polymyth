@@ -12,7 +12,7 @@ any3 = 'any3'
 anys = [any1, any2, any3]
 
 Expression = collections.namedtuple(
-    'Expression', 'core argument_map modifiers'
+    'Expression', 'core argument_map modifiers unnamed'
 )
 
 class Object:
@@ -30,12 +30,13 @@ def param_to_string(arg):
     return str(arg) # if it's not an object, it must be a parameter
 
 class ParameterizedExpression:
-    def __init__(self, core, parameter_map, modifiers):
+    def __init__(self, core, parameter_map, unnamed, modifiers):
         self.core = core
         self.parameter_map = {
             expr_param : param_to_string(arg)
             for expr_param, arg in parameter_map.items()
         }
+        self.unnamed = unnamed
         self.modifiers = modifiers
 
     def __repr__(self):
@@ -62,12 +63,12 @@ class MakeBeat:
         self.prohibitive_concept_tuples.append(tuple(prohibitive_concepts))
         return self
 
-    def express(self, expression, parameter_map, *modifiers):
+    def express(self, expression, parameter_map, *modifiers, unnamed={}):
         assert expression.parameters == tuple(parameter_map.keys()), (
             str(expression) + " doesn't match " + str(parameter_map)
         )
         self.expressions.append(
-            ParameterizedExpression(expression, parameter_map, modifiers)
+            ParameterizedExpression(expression, parameter_map, unnamed, modifiers)
         )
         return self
 
