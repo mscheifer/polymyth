@@ -166,14 +166,21 @@ def get_possible_bound_args_if_establishes(
         for object_combination in object_combinations
     )
 
-    is_restricted = lambda zipped: any(
-        obj in restrictions for obj, (_, restrictions) in zipped
+    def get_if_not_restricted(zipped):
+        ret = []
+        for obj, (param, restrictions) in zipped:
+            if obj in restrictions:
+                return None
+            ret.append((param, obj))
+        return ret
+
+    free_arg_combos_or_nones = (
+        get_if_not_restricted(zipped)
+        for zipped in unrestricted_free_arg_combos
     )
 
     free_arg_combos = (
-        ((free_param, obj) for obj, (free_param, _) in zipped)
-        for zipped in unrestricted_free_arg_combos
-        if not is_restricted(zipped)
+        combo for combo in free_arg_combos_or_nones if combo is not None
     )
 
     return (

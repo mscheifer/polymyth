@@ -315,8 +315,7 @@ class Test(unittest.TestCase):
             [idea, idea],
             objects
         )
-        # Need to convert to a list to get length becuse it is a generator
-        self.assertEqual(len(list(arg_possibilities)), 0)
+        self.assertEqual(list(arg_possibilities), [])
 
         arg_possibilities2 = story_state.get_possible_bound_args_if_establishes(
             [story.are_different(1,2)],
@@ -325,8 +324,19 @@ class Test(unittest.TestCase):
             # No possibilities because we need 2 different objects and only 1 exists
             objects[0:1]
         )
-        # Need to convert to a list to get length becuse it is a generator
-        self.assertEqual(len(list(arg_possibilities2)), 0)
+        self.assertEqual(list(arg_possibilities2), [])
+
+        arg_possibilities3 = story_state.get_possible_bound_args_if_establishes(
+            [story.are_different(1,2)],
+            [],
+            [],
+            objects[0:2]
+        )
+        expected = [
+            {'1': objects[0], '2': objects[1]},
+            {'1': objects[1], '2': objects[0]},
+        ]
+        self.assertCountEqual(list(arg_possibilities3), expected)
 
 if __name__ == '__main__':
     random.seed(1234) # for deterministic tests
