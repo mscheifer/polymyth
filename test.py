@@ -298,11 +298,19 @@ class Test(unittest.TestCase):
         state = story_state.StoryState([content_pack])
         state.establish_idea(concept(objects[0]), {})
 
-        beat = (story.MakeBeat('b3')
+        beat3 = (story.MakeBeat('b3')
              .ok_if(concept(1), concept(2), story.are_different(1,2))
              .sets_up(o_concept(1,2))
         )
-        self.assertIsNone(state.try_update_with_beat(beat))
+        self.assertIsNone(state.try_update_with_beat(beat3))
+
+        beat4 = (story.MakeBeat('b4')
+            .if_not(
+                concept(story.any1), story.are_different(story.any1, objects[1])
+            )
+            .sets_up(o_concept2(1,2))
+        )
+        self.assertIsNone(state.try_update_with_beat(beat4))
 
     def test_get_possible_bound_args_if_establishes(self):
         concept = story.Concept(1, "c1")

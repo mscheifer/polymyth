@@ -284,7 +284,7 @@ def is_prohibited(narrative_piece, established_ideas, arguments):
             concept_args = []
             for arg in concept.key_arguments:
                 if isinstance(arg, story.Object):
-                    conept_arg = arg
+                    concept_arg = arg
                 elif arg in story.anys:
                     if arg in bound_anys:
                         concept_arg = bound_anys.get(arg)
