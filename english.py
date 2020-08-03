@@ -192,6 +192,11 @@ actions_text = {
         Quote("ml", "Nothing has happened all night but this is..."),
         Quote("ml", "Well this is something at least."),
     ],
+    actions.find_wedding_ring_and_watch_on_counter: [
+        "%pi:s noticed a wedding band and gold watch on the kitchen counter.",
+        ("If you were kidnapped why would you take off your wedding ring " +
+        "first? He thought.")
+    ],
     actions.get_rejected: [
         Quote("date", "Oh, your going to go help your mom out? That's so " +
         "nice... Well... I don't think I want to see you again. You seemed " +
@@ -337,9 +342,56 @@ actions_text = {
         Quote("date", "Wow, you're well fixed on this guy. Maybe I should " +
         "give you space to get to know him."),
     ],
+    actions.talk_to_depressed_person: [
+        Quote("depressed_person", "You must hate me."),
+        Quote("other_person", "We won't give up on you, %deprssed_person:v."),
+        Quote("other_person", "We want you to figure your shit out so you " +
+        "can be one of us."),
+    ],
+    actions.talk_to_client_father_while_both_trapped: [
+        Quote("client_father", "Well, if we're both going to die then so be " +
+        "it."),
+        Quote("pi", "I'd drink to that if we had some."),
+        Quote("client_father", "If we were gettin out I'd say quit that junk."),
+        Quote("client_father", "Haven't touched the stuff since my frat days."),
+        Quote("pi", "USC?"),
+        Quote("client_father", "UCLA"),
+        Quote("pi", "My dad went to UCLA."),
+        Quote("client_father", "Sure did. I knew him."),
+        Quote("pi", "You remember him from school?"),
+        Quote("client_father", "And after, we worked at the same firm for a " +
+        "few years."),
+        Quote("pi", "Did you see his 40 yard catch in the big game?"),
+        Quote("pi", "He used to go on and on about that."),
+        Quote("pi", "Sounded like a big fish story to me though."),
+        Quote("client_father", "Haha, no that did happen."),
+        Quote("client_father", "It was a helluva game."),
+        Quote("client_father", "He lied about other things but not about " +
+        "that."),
+    ],
+    actions.talk_to_murderer: [
+        Quote("murderer", "We gave %victim:o every chance we could."),
+        Quote("murderer", "We told %victim:o over and over %victim:s couldn't" +
+        " keep doing what %victim:s was doing."),
+        Quote("murderer", "%victim:s wouldn't listen so we had to do it."),
+        Quote("murderer", "It's rough. I feel bad but %victim:s did this to " +
+        "%victim:oself."),
+    ],
+    actions.talk_to_seductress_on_phone: [
+        Quote("seductress", "What do you think I look like from my voice?"),
+        Quote("person", "What? I don't know."),
+        Quote("seductress", "Do you think I'm wearing a robe?"),
+        Quote("seductress", "Or would you prefer something thin and lacy?"),
+        Quote("seductress", "Or nothing at all?"),
+        Quote("person", "Umm. I don't know."),
+    ],
     actions.turn_on: "%person:s turned on the %thing:o",
     actions.twirl_phone_cord: "%person:p fingers twirled the phone cord.",
     actions.walk_to: "%person:s walked to %to:o.",
+    actions.want_to_give_up: [
+        Quote("client", "We're not going to find him. Let's just go."),
+        Quote("client", "I want to go where the street meets the sand.")
+    ],
     actions.watch_talk_show_about_ghosting: ("The host was in the middle of " +
         "asking his guest. 'Have you ever ghosted anyone?' 'Well I ghosted my" +
         " guitar teacher.' Canned laughter."),
@@ -350,11 +402,19 @@ descriptions_text = {
     descriptions.opened_shop_late_at_night:
         "%person:s opened the shop every day at 10 pm and closed it again at 8 am.",
     descriptions.picture_and_last_words: [
-        ("It was a nice picture of %partner:o, the one on %person:p desk, but " +
-        "%person:s didn't look at it often."),
-        ("Everytime %person:s glanced at it %partner:p last words replayed in " +
-        "%person:p head."),
+        ("It was a nice picture of %partner:o, the one on %person:p desk, but" +
+        " %person:s didn't look at it often."),
+        ("Everytime %person:s glanced at it %partner:p last words replayed in" +
+        " %person:p head."),
         '"Swing away, %person:v, swing away."',
+    ],
+    descriptions.pi_at_home: [
+        "The PI leaned against his bedroom window.",
+        ("%pi:s watched night owls push umbrellas up Geary street while " +
+        "listening to the patter of the rain."),
+        ("%pi:s turned to look back at %pi:p darkened room and watched " +
+        "squares of light move across the wall as cars passed by with their " +
+        "bright headlights"),
     ],
     descriptions.served_late_night_customers:
         "%person:s served taxi drivers, bar tenders and graveyard shift workers.",
@@ -364,6 +424,7 @@ nouns_text = {
     nouns.bartender: "bartender",
     nouns.doorman: "doorman",
     nouns.home: "home",
+    nouns.nobody: "nobody",
     nouns.on_a_date: (
         "out to dinner",
         "on a date",
@@ -563,10 +624,14 @@ class ProseState:
 your sister and you upend your life and your business?" """
 
 #TODO: rewrite
-"""The house lights dimmed. The band started a low jazz number. Spotlights from the
-back of the room began spinning. The lights came together, drawing every eye in
-the crowd to to the curtain, which parted revealing a woman in a blue sequin
+"""The house lights dimmed. The band started a low jazz number. Spotlights from
+the back of the room began spinning. The lights came together, drawing every eye
+in the crowd to to the curtain, which parted revealing a woman in a blue sequin
 dress. The spotlights moved again, casting layered shadows across her face. It
 looked like she was changing into a different person."""
 #TODO: she starts singing coded message
 
+"""Nightmares, fright, such a different world day and night. Your fantasies get
+so carried away in the dark but then everything seems sensible and ordinary
+again in the sun. Let's just have day from now on and do away with the
+nights."""
