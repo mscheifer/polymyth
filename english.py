@@ -95,6 +95,40 @@ actions_text = {
         "again. That sax player you like is playing again at Charlie's."),
     actions.ask_what_are_you_up_to_this_weekend: 
         Quote("person", "What are you up to this weekend?"),
+    actions.ask_who_could_have_killed_animals: [
+        Quote("person", "Why the hell would you massacre a pet shop?"),
+        Quote("person", "What's the point?"),
+        Quote("person", "What kind of heartless bastard would do this?"),
+    ],
+    actions.ask_why_bar_burned_down: [
+        Quote("pi", "Did you see when it happened?"),
+        Quote("bystander", "I heard wood cracking and glass breaking."),
+        Quote("bystander", "I came outside at dawn and it was raging."),
+        Quote("pi", "Was there anybody around?"),
+        Quote("bystander", "I wasn't looking."),
+        Quote("bystander", "I called the fire department."),
+        Quote("bystander",
+            "I was praying it wouldn't break back and get my property."),
+        Quote("pi", "Do you know the owners?"),
+        Quote("pi", "Have you spoken with them?"),
+        Quote("bystander", "I know 'em but we ain't exactly friendly."),
+        Quote("bystander", "So, no. Haven't spoken with 'em or attempted to."),
+        Quote("pi", "Bad neighbors?"),
+        Quote("bystander", "You know it."),
+        Quote("bystander",
+            "They got them trucks that reek of fish coming by at all hours."),
+        Quote("bystander", "Once I wasn't worried no more about my place " +
+            "going up my first thought was 'good riddance'."),
+        Quote("pi", "Oh yeah those TESCO trucks?"),
+        Quote("pi", "I hate em too."),
+        Quote("pi", "They're all over town."),
+        Quote("bystander",
+            "No these were Abraham's Fish with that big photo of a fisherman."),
+        Quote("bystander", "If I ever saw that guy walking down the street " +
+            "I'd sock him without thinking twice."),
+        Quote("pi", "Umm, that's quite aggressive."),
+        Quote("pi", "Thanks for your time."),
+    ],
     actions.ask_why_you_didnt_know_where_from: [
         Quote("person1", "Why don't you know where your friend was from?"),
         Quote("person1", "Didn't he tell you?"),
@@ -166,9 +200,12 @@ actions_text = {
         Quote("doorman", "Alright come on in."),
     ],
     actions.follow_father_inside_then_meet_mysterious_woman: [
-        "The place was almost empty. %pi:s took a quick peak in each booth, " +
-        "then he went back and checked the men's bathroom. The father had " +
-        "vanished. %pi:s sat down at the bar. %pi:s felt suddenly winded.",
+        "The place was almost empty.",
+        ("%pi:s took a quick peak in each booth, " +
+        "then he went back and checked the men's bathroom."),
+        "The father had vanished.",
+        "%pi:s sat down at the bar.",
+        "%pi:s felt suddenly winded.",
         Quote("pi", "Hey, did you see an old man come in here?"),
         Quote("bartender", "Umm, yeah an old man came in a few hours ago"),
         Quote("pi", "No, I mean just now. I followed him in here."),
@@ -284,10 +321,11 @@ actions_text = {
         Quote("pi", "Ahh... yes of course. Your father was a great man from " +
         "all the stories I had heard and I was glad to meet him. How is he?"),
     ],
-    actions.say_needs_to_help_mom: ("I gotta stop by my mom's place at some " +
+    actions.say_needs_to_help_mom:
+         Quote("person", "I gotta stop by my mom's place at some " +
         "point to help her move a bookcase. But that's about it."),
     actions.say_oh_not_much:
-        "Oh not much. Just some spring cleaning. You?",
+        Quote("person", "Oh not much. Just some spring cleaning. You?"),
     actions.say_saw_pi_in_a_dream: [
         Quote("client", "You know. I came to you because I knew you from a " +
             "dream."),
@@ -316,8 +354,8 @@ actions_text = {
         ("%pi:s had been drumming %pi:p fingers and staring at the wall when " +
         "%pi:s heard a knock on the door."),
         Quote("pi", "Come on in."),
-        Quote("client", "Good evening %pi:v. May I have a seat?"), # TODO: formal vocative case
-        Quote("pi", "Please, %client:v"), # TODO: formal vocative unknown name case
+        Quote("client", "Good evening %pi:fv. May I have a seat?"),
+        Quote("pi", "Please, %client:uv"),
         "%pi:s stuck out %pi:p hand.",
     ],
     actions.see_regular_walk_in: [
@@ -399,6 +437,18 @@ actions_text = {
 }
 
 descriptions_text = {
+    descriptions.knows_fish_company_by_docks: [
+        "%pi:s knew Abraham's Fish.",
+        "They had a warehouse out on Pier 21.",
+    ],
+    descriptions.pet_shop_massacre: [
+        "There were a lot of blood on the ground.",
+        "%pi:s had to watch %pi:p step.",
+        "Counters and cabinets had been tipped over."
+        "Cages were torn open and tossed aside.",
+        ("Papers were strewn across the floor, along with clumps of fur and " +
+        "feathers"),
+    ],
     descriptions.opened_shop_late_at_night:
         "%person:s opened the shop every day at 10 pm and closed it again at 8 am.",
     descriptions.picture_and_last_words: [
@@ -424,6 +474,7 @@ nouns_text = {
     nouns.bartender: "bartender",
     nouns.doorman: "doorman",
     nouns.home: "home",
+    nouns.neighbor: "neighbor",
     nouns.nobody: "nobody",
     nouns.on_a_date: (
         "out to dinner",
@@ -457,7 +508,11 @@ def get_lines(text_data, expr_id):
     assert isinstance(text, str)
     return [text]
 
-CasedWord = namedtuple('CasedWord', 'subject_case object_case possessive_case vocative_case')
+CasedWord = namedtuple(
+    'CasedWord',
+    ('subject_case object_case possessive_case vocative_case ' +
+    'formal_vocative_case unknown_vocative_case')
+)
 
 @enum.unique
 class ParagraphSubjects(enum.Enum):
@@ -508,19 +563,40 @@ class ProseState:
                 noun.raw_name if unnamed_title is None
                 else "the " + get_raw_noun_string(unnamed_title)
             )
+            last_name = (
+                noun.raw_last_name if unnamed_title is None
+                else get_raw_noun_string(unnamed_title)
+            )
+
+            if gender == "male":
+                honorific = "Mr. " + last_name
+                unknown = "Sir"
+            elif gender == "female":
+                honorific = "Ms. " + last_name
+                unknown = "Miss"
+            else:
+                assert False
 
             if self.gender_to_last_character_reffered_to[gender] is not noun:
                 self.gender_to_last_character_reffered_to[gender] = noun
-                return CasedWord(name, name, name + "'s", name)
+                # Don't use pronouns if we're referring to a new character.
+                return CasedWord(name, name, name + "'s", name, honorific, unknown)
             else:
                 if gender == "male":
-                    return CasedWord("he", "him", "his", name)
+                    return CasedWord("he", "him", "his", name, honorific, unknown)
                 elif gender == "female":
-                    return CasedWord("she", "her", "her", name)
+                    return CasedWord("she", "her", "her", name, honorific, unknown)
                 else:
                     assert False
         raw_noun = get_raw_noun_string(noun)
-        return CasedWord(raw_noun, raw_noun, raw_noun + "'s", raw_noun)
+        return CasedWord(
+            raw_noun,
+            raw_noun,
+            raw_noun + "'s",
+            raw_noun,
+            random.choice(["Mr. ", "Ms. "]) + raw_noun, # formal
+            "you thing" # unknown
+        )
 
     def _format_line(self, formatted_line, argument_map, unnamed_titles):
         prose_chunks = prose.parse(formatted_line.strip())

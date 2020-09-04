@@ -3,18 +3,20 @@ import enum
 import re
 
 # Text is a formatted string. Each format specifier starts with a % sign. There
-# is a parameter name (often a number), and then a series of letters describing
-# which part of the argument will be inserted.
+# is a parameter name, and then a series of letters describing which form of the
+# argument will be inserted.
 #
 # Examples:
-# %0:s means to insert the first argument in the posessive case.
-# %2:o means to insert the second argument in the object case.
+# %person:s means to insert the 'person' argument in the posessive case.
+# %client:o means to insert the 'client' argument in the object case.
 #
 # The full list is:
 #   s - subject
 #   o - object
 #   p - posessive
 #   v - vocative
+#   fv - formal vocative
+#   uv - unknown vocative (when the character's name is unknown to the speaker)
 
 @enum.unique
 class Case(enum.Enum):
@@ -22,6 +24,8 @@ class Case(enum.Enum):
     OBJECTIVE = 'object'
     POSESSIVE = 'possessive'
     VOCATIVE = 'vocative'
+    FORMAL_VOCATIVE = 'formal-vocative'
+    UNKOWN_VOCATIVE = 'unknown-vocative'
 
 ParameterChunk = namedtuple('ParameterChunk', 'case parameter')
 
@@ -55,6 +59,10 @@ def parse(formatted_text):
                 case = Case.POSESSIVE
             elif part_of_speach == "v":
                 case = Case.VOCATIVE
+            elif part_of_speach == "fv":
+                case = Case.FORMAL_VOCATIVE
+            elif part_of_speach == "uv":
+                case = Case.UNKNOWN_VOCATIVE
             else:
                 assert False, (
                     "unknown specifier: " + part + " decomposed as " +
