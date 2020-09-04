@@ -1,9 +1,17 @@
 import collections
 import itertools
 
-# If we break the narrative down into small enough pieces, it becomes a language. We can recombine
-# the pieces to create novelty. Repeating the same building blocks does not sound repetative, just
-# like words.
+# If we break the narrative down into small enough pieces, it becomes a
+# language. We can recombine the pieces to create novelty. Repeating the same
+# building blocks does not sound repetative, just like words.
+#
+# We don't want superficial differences. We shouldn't have one beat that's the
+# exact same as another one except that the character is eating an orange
+# instead of an apple. The minimum difference between two stories is that a
+# character moves on a contrasting arc or the story establishes a contrasting
+# theme, not just that a character moves on a variant arc or the story
+# establishes an independent theme as then in theory you're just telling
+# multiple sides of the same story and both stories could be combined into one.
 
 any1 = 'any1'
 any2 = 'any2'
@@ -162,6 +170,7 @@ class Concept:
     ):
         self.num_key_parameters = num_key_parameters
         self.num_value_parameters = num_value_parameters
+        assert debug_name is None or isinstance(debug_name, str)
         self.debug_name = debug_name
 
     def get_parameterized(self):
@@ -200,7 +209,10 @@ class _ParameterizedConcept:
         self.concept = concept
         assert None not in key_arguments
         assert None not in value_arguments
-        assert len(key_arguments) == concept.num_key_parameters
+        assert len(key_arguments) == concept.num_key_parameters, (
+            f"Wanted {concept.num_key_parameters} got {len(key_arguments)} " +
+            f"for {self.concept}"
+        )
         assert len(value_arguments) == concept.num_value_parameters
         self.key_arguments = tuple(param_to_string(p) for p in key_arguments)
         self.value_arguments = tuple(
