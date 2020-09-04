@@ -479,7 +479,7 @@ class StoryState:
             if not self.can_story_end(narrative_piece, used_ideas):
                 continue
 
-            debug_outputs = []
+            debug_outputs = ["\t" + str(all_args)]
 
             # Now do the update steps becuase our match was succesful
             for parameterized_output_concept in narrative_piece.parameterized_output_concepts:
