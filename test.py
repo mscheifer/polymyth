@@ -9,7 +9,7 @@ import story_state
 
 objects = [story.Object("charA"), story.Object("charB"), story.Object("charC")]
 
-content_pack = story.ContentPack(objects, [], [], {})
+content_pack = story.ContentPack(objects, [], [], [], {})
 
 TestCharacter = collections.namedtuple("TestCharacter", "subject_case")
 

@@ -50,12 +50,11 @@ class ParameterizedExpression:
     def __repr__(self):
         return str((self.core, self.parameter_map, self.modifiers))
 
-class MakeBeat:
+class MakeRule:
     def __init__(self, debug_text):
         self.debug_text = debug_text
         self.required_concept_tuples = []
         self.prohibitive_concept_tuples = []
-        self.expressions = []
 
     # One call to ok_if() creates a set of concepts that must all be present for this beat to be
     # allowed. If you want to allow this beat for any of several concepts, just call ok_if()
@@ -70,6 +69,11 @@ class MakeBeat:
     def if_not(self, *prohibitive_concepts):
         self.prohibitive_concept_tuples.append(tuple(prohibitive_concepts))
         return self
+
+class MakeBeat(MakeRule):
+    def __init__(self, debug_text):
+        super().__init__(debug_text)
+        self.expressions = []
 
     def express(self, expression, parameter_map, *modifiers, unnamed={}):
         assert expression.parameters == tuple(parameter_map.keys()), (
@@ -89,18 +93,24 @@ class MakeBeat:
             self.expressions
         )
 
-class NarrativePiece:
+class MakeLogic(MakeRule):
+    def sets_up(self, *output_concepts):
+        return Logic(
+            self.debug_text,
+            self.required_concept_tuples,
+            output_concepts,
+            self.prohibitive_concept_tuples
+        )
+
+class Rule:
     def __init__(
         self,
         debug_text,
         required_concept_tuples,
         output_concepts,
-        prohibitive_concept_tuples,
-        parameterized_expressions,
+        prohibitive_concept_tuples
     ):
         self.debug_text = debug_text
-
-        self.parameterized_expressions = parameterized_expressions
 
         self.parameterized_required_concept_tuples = [
             [req.get_parameterized() for req in tup]
@@ -156,6 +166,26 @@ class NarrativePiece:
 
     def __repr__(self):
         return self.debug_text
+
+class NarrativePiece(Rule):
+    def __init__(
+        self,
+        debug_text,
+        required_concept_tuples,
+        output_concepts,
+        prohibitive_concept_tuples,
+        parameterized_expressions,
+    ):
+        super().__init__(
+            debug_text,
+            required_concept_tuples,
+            output_concepts,
+            prohibitive_concept_tuples
+        )
+        self.parameterized_expressions = parameterized_expressions
+
+class Logic(Rule):
+    pass
 
 class Concept:
     # In the common case, num_value_parameters is 0, so there is only 1 possible
@@ -227,7 +257,20 @@ class _ParameterizedConcept:
 
 ContentPack = collections.namedtuple(
     'ContentPack',
-    'objects pre_established_concepts possible_beats, object_expressions'
+    ' '.join([
+        'objects',
+        'pre_established_concepts',
+        # Beats change the story. They have concept requirements and establish
+        # new concepts but they have to express things to the reader to justify
+        # the established ideas.
+        'possible_beats',
+        # Logical rules are always true. Whenever new ideas are established
+        # these rules may establish even more ideas. These are things logical
+        # steps that readers should make automatically and they would be
+        # confused if the story did not also.
+        'logic_rules',
+        'object_expressions'
+    ])
 )
 
 # This special concept is implemented in the engine. are_different is always

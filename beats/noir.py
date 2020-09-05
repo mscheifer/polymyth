@@ -2,6 +2,7 @@ from story import (
     Concept,
     ContentPack,
     MakeBeat,
+    MakeLogic,
     NarrativePiece,
     Object,
     any1,
@@ -718,7 +719,7 @@ narrative_pieces = ([
         )
         .if_not(hasACase(0))
         .express(actions.hear_client_father_is_missing, {"pi": 0, "client": 1})
-        .sets_up(hasACase(0), caseOfMissingFather(0), HerosJourney.need),
+        .sets_up(caseOfMissingFather(0), HerosJourney.need),
 
     MakeBeat("Is very eager to take case")
         .ok_if(
@@ -1434,6 +1435,13 @@ narrative_pieces = ([
         .sets_up(run_off_together(1,2))
 ])
 
+logic_rules = [
+    MakeLogic("Any case means has a case.")
+        .ok_if(caseOfMissingFather(0))
+        .ok_if(father_being_shady_case, isPI(0))
+        .sets_up(hasACase(0))
+]
+
 # A theory for cycles in the story:
 #
 # The situations the characters end up in are based on the theme / tone at that
@@ -1470,7 +1478,11 @@ narrative_pieces = ([
 # end.
 
 content_pack = ContentPack(
-    objects, pre_established_concepts, narrative_pieces, object_expressions
+    objects,
+    pre_established_concepts,
+    narrative_pieces,
+    logic_rules,
+    object_expressions
 )
 
 # TODO: For alcoholic, has to keep reminding himself to be a real person. That

@@ -243,7 +243,7 @@ def get_possible_basis_ideas(narrative_piece, established_ideas, all_objects):
 
     return itertools.chain.from_iterable(combo_iterators)
 
-def is_prohibited(narrative_piece, established_ideas, arguments):
+def is_prohibited(rule, established_ideas, arguments):
     def is_established_by_and_bind_anys(
         parameterized_concept, established_idea, bound_arguments, bound_anys
     ):
@@ -306,7 +306,7 @@ def is_prohibited(narrative_piece, established_ideas, arguments):
         return True
 
     for prohibitive_concept_tuple in (
-        narrative_piece.parameterized_prohibitive_concept_tuples
+        rule.parameterized_prohibitive_concept_tuples
     ):
         special_concepts, normal_concepts = separate_special_concepts(
             prohibitive_concept_tuple
@@ -343,12 +343,12 @@ def get_all_parameters(parameterized_concept):
         ) if not isinstance(arg, story.Object)
     )
 
-def try_get_output_args(narrative_piece, established_ideas, all_non_output_args):
-    if is_prohibited(narrative_piece, established_ideas, all_non_output_args):
+def try_get_output_args(rule, established_ideas, all_non_output_args):
+    if is_prohibited(rule, established_ideas, all_non_output_args):
         return None
 
     output_args = {}
-    for output_concept in narrative_piece.parameterized_output_concepts:
+    for output_concept in rule.parameterized_output_concepts:
         for output_param in get_all_parameters(output_concept):
             assert output_param in all_non_output_args
             output_args[output_param] = all_non_output_args[output_param]
@@ -361,7 +361,7 @@ def try_get_output_args(narrative_piece, established_ideas, all_non_output_args)
         is_established_by(
             parameterized_output_concept, established_ideas, output_args
         )
-        for parameterized_output_concept in narrative_piece.parameterized_output_concepts
+        for parameterized_output_concept in rule.parameterized_output_concepts
     ):
         # we have already established these ideas so fail for these args
         return None
@@ -371,65 +371,138 @@ def try_get_output_args(narrative_piece, established_ideas, all_non_output_args)
 def get_ideas_that_have_lead_nowhere(established_ideas, used_ideas):
     return (idea for idea in established_ideas if idea not in used_ideas)
 
+def make_established_idea(
+    all_ideas,
+    parameterized_concept,
+    args_map
+):
+    key_arguments = reify_parameters(
+        parameterized_concept.key_arguments, args_map
+    )
+
+    value_arguments = reify_parameters(
+        parameterized_concept.value_arguments, args_map
+    )
+
+    idea = EstablishedIdea(
+        parameterized_concept.concept,
+        tuple(key_arguments),
+        tuple(value_arguments)
+    )
+
+    debug_output = None
+
+    key = idea.get_key()
+    if key in all_ideas:
+        existing_value = all_ideas[key].value_arguments
+        if existing_value != idea.value_arguments:
+            debug_output = (
+                "==Replacing" + str(existing_value) + "with:" + str(idea) +
+                "for next beat=="
+            )
+
+    return key, idea, debug_output
+
 class StoryState:
     def __init__(self, content_packs):
         # established_ideas is key->value current state store, common concepts
         # are permanent and have keys but an empty set of values
         self.established_ideas = {}
-        self.used_ideas = set() # ideas that have lead to something
-        for content_pack in content_packs:
-            for parameterized_concept in content_pack.pre_established_concepts:
-                debug_output = self.establish_idea(parameterized_concept, {})
-                if debug_output is not None:
-                    print(debug_output)
+        # derived_established_ideas is the same format as established_ideas but
+        # the values in here come from logical rules deriving new concepts from
+        # what is contained in established_ideas.
+        self.derived_established_ideas = {}
+
+        self.logic_rules = [
+            rule for pack in content_packs for rule in pack.logic_rules
+        ]
+
         self.objects = []
         for content_pack in content_packs:
             for obj in content_pack.objects:
                 self.objects.append(obj)
+
         self.object_expressions = {}
         for content_pack in content_packs:
             for obj, expression in content_pack.object_expressions.items():
                 assert obj not in self.object_expressions
                 self.object_expressions[obj] = expression
 
+        self.used_ideas = set() # ideas that have lead to something
+        for content_pack in content_packs:
+            for parameterized_concept in content_pack.pre_established_concepts:
+                debug_outputs = self.establish_idea(parameterized_concept, {})
+                for debug_output in debug_outputs:
+                    print(debug_output)
+
+    def _get_all_established_ideas(self):
+        return collections.ChainMap(
+            self.established_ideas,
+            self.derived_established_ideas
+        )
+
     def establish_idea(self, parameterized_concept, args_map):
-        key_arguments = reify_parameters(
-            parameterized_concept.key_arguments, args_map
+        debug_outputs = []
+        key, idea, debug_output = make_established_idea(
+            self._get_all_established_ideas(),
+            parameterized_concept,
+            args_map
         )
-
-        value_arguments = reify_parameters(
-            parameterized_concept.value_arguments, args_map
-        )
-
-        idea = EstablishedIdea(
-            parameterized_concept.concept,
-            tuple(key_arguments),
-            tuple(value_arguments)
-        )
-
-        debug_output = None
-
-        key = idea.get_key()
-        if key in self.established_ideas:
-            existing_value = self.established_ideas[key].value_arguments
-            if existing_value != idea.value_arguments:
-                debug_output = (
-                    "==Replacing" + str(existing_value) + "with:" + str(idea) +
-                    "for next beat=="
-                )
         self.established_ideas[key] = idea
-        return debug_output
 
-    def try_update_with_beat(self, narrative_piece):
+        if debug_output is not None:
+            debug_outputs.append(debug_output)
+
+        new_derived_established_ideas = {}
+
+        for logic_rule in self.logic_rules:
+            maybe_args_and_ideas = (
+                self._maybe_get_matched_args_that_can_satisfy_rule(logic_rule)
+            )
+            if maybe_args_and_ideas is not None:
+                #TODO: add the new used ideas
+                _, derived_output_args, _ = maybe_args_and_ideas
+                for parameterized_derived_concept in logic_rule.parameterized_output_concepts:
+                    key, idea, debug_output = make_established_idea(
+                        self._get_all_established_ideas(),
+                        parameterized_derived_concept,
+                        derived_output_args
+                    )
+                    new_derived_established_ideas[key] = idea
+                    if debug_output is not None:
+                        debug_outputs.append(debug_output)
+
+        def get_stateless_ideas(estab_ideas):
+            return set(k for k, v in estab_ideas if len(v) == 0)
+
+        stateless_derived_ideas = get_stateless_ideas(
+            self.derived_established_ideas
+        )
+        stateless_new_derived_ideas = get_stateless_ideas(
+            new_derived_established_ideas
+        )
+        # We're only checking that the statless ideas don't get unestablished.
+        # It's expected that stateful ideas derived from logic rules will change
+        # over the course of the story.
+        assert stateless_derived_ideas.issubset(stateless_new_derived_ideas), (
+            "We have a logical contradiction. A concept that was previously " +
+            "derived is no longer true after this beat.")
+
+        self.derived_established_ideas = new_derived_established_ideas
+
+        return debug_outputs
+
+    def _maybe_get_matched_args_that_can_satisfy_rule(self, rule):
+
         for requirements_bound_arguments, used_ideas in get_possible_basis_ideas(
-            narrative_piece, self.established_ideas, self.objects
+            rule, self._get_all_established_ideas(), self.objects
         ):
             # Parameters from requirements are "bound" and parameters from
             # prohibitive and output concepts are "free"
             free_parameters = []
             for parameterized_concept in itertools.chain(
-                narrative_piece.parameterized_output_concepts,
-                *narrative_piece.parameterized_prohibitive_concept_tuples
+                rule.parameterized_output_concepts,
+                *rule.parameterized_prohibitive_concept_tuples
             ):
                 for param in get_all_parameters(parameterized_concept):
                     if param not in requirements_bound_arguments and param not in story.anys:
@@ -461,9 +534,7 @@ class StoryState:
                     requirements_bound_arguments, possible_free_args
                 )
                 output_args = try_get_output_args(
-                    narrative_piece,
-                    self.established_ideas,
-                    all_non_output_args
+                    rule, self._get_all_established_ideas(), all_non_output_args
                 )
                 if output_args is not None:
                     all_args = merge_args(
@@ -476,55 +547,80 @@ class StoryState:
             if output_args is None:
                 continue
 
-            if not self.can_story_end(narrative_piece, used_ideas):
+            if not self.can_story_end(rule, used_ideas):
                 continue
 
-            debug_outputs = ["\t" + str(all_args)]
-
-            # Now do the update steps becuase our match was succesful
-            for parameterized_output_concept in narrative_piece.parameterized_output_concepts:
-                debug_output = self.establish_idea(parameterized_output_concept, output_args)
-                if debug_output is not None:
-                    debug_outputs.append(debug_output)
-
-            self.used_ideas.update(used_ideas)
-            # end update steps
-
-            expressions = []
-
-            for expression in narrative_piece.parameterized_expressions:
-                expr_args = {}
-                for expr_param, arg in expression.parameter_map.items():
-                    if isinstance(arg, story.Object):
-                        obj = arg
-                    else:
-                        assert arg in all_args, (
-                            "Missing " + str(arg) + " for " + str(expression) +
-                            " in " + str(narrative_piece)
-                        )
-                        obj = all_args[arg]
-                    expr_arg = self.object_expressions[obj]
-                    expr_args[expr_param] = expr_arg
-
-                reified_expression = story.Expression(
-                    expression.core,
-                    expr_args,
-                    expression.modifiers,
-                    expression.unnamed
-                )
-                expressions.append(reified_expression)
-
-            return expressions, debug_outputs
+            return all_args, output_args, used_ideas
 
         return None
 
+    def try_update_with_beat(self, narrative_piece):
+        maybe_args_and_ideas = (
+            self._maybe_get_matched_args_that_can_satisfy_rule(narrative_piece)
+        )
+
+        if maybe_args_and_ideas is None:
+            return None
+
+        all_args, output_args, used_ideas = maybe_args_and_ideas
+
+        debug_outputs = ["\t" + str(all_args)]
+
+        # Now do the update steps becuase our match was succesful
+        for parameterized_output_concept in narrative_piece.parameterized_output_concepts:
+            est_debug_outputs = self.establish_idea(parameterized_output_concept, output_args)
+            debug_outputs.extend(est_debug_outputs)
+
+        self.used_ideas.update(used_ideas)
+        # end update steps
+
+        expressions = []
+
+        for expression in narrative_piece.parameterized_expressions:
+            expr_args = {}
+            for expr_param, arg in expression.parameter_map.items():
+                if isinstance(arg, story.Object):
+                    obj = arg
+                else:
+                    assert arg in all_args, (
+                        "Missing " + str(arg) + " for " + str(expression) +
+                        " in " + str(narrative_piece)
+                    )
+                    obj = all_args[arg]
+                expr_arg = self.object_expressions[obj]
+                expr_args[expr_param] = expr_arg
+
+            reified_expression = story.Expression(
+                expression.core,
+                expr_args,
+                expression.modifiers,
+                expression.unnamed
+            )
+            expressions.append(reified_expression)
+
+        return expressions, debug_outputs
+
     def can_story_end(self, narrative_piece, new_used_ideas):
+        #TODO: one alternative here is that earlier when we are selecting
+        # possible beats that we work our way forward first to verify that there
+        # is a path to the end before we let the beat show up. That may be
+        # intractable although it's possible part of the logic can be
+        # pre-computed and stored.
         for parameterized_concept in narrative_piece.parameterized_output_concepts:
             if parameterized_concept.concept is story.story_end:
                 # lazily check if there's at least one that has lead nowhere
                 used_ideas = set.union(self.used_ideas, set(new_used_ideas))
                 if next(get_ideas_that_have_lead_nowhere(
-                    self.established_ideas, used_ideas
+                    self._get_all_established_ideas(), used_ideas
                 ), None) is not None:
                     return False
         return True
+
+
+# TODO: code for logic_rules should store the generated concepts separately from
+# the other established ideas and then every time a new beat is take and new
+# ideas establsihed, we would re-run the logic to get a whole new set of derived
+# ideas which we would compare to see if it was a super set of the existing
+# stored set and if not we would log an error for inconsistent logic. But that
+# could just be in debug mode, if not now then later, if we want to speed this
+# up in the future by assuming no logical inconsistencies.
