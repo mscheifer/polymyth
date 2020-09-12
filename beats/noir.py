@@ -1,3 +1,20 @@
+# Thoughts on high level beat file structure. Would have:
+# 1. Conversations
+# 2. Character arcs
+# 3. Mystery
+# 4. noir.py - which imports and combines the others
+# 5. Character traits and relationship concepts - imported by all of character
+# arcs, conversations and mysteries.
+#
+# There would be stuff in the character arcs file that says one of these things
+# needs to be established for a part of the heros journey like
+# HerosJourneyArc.search . Similarly there would be rules in the mystery file
+# saying certain things need to happen before HerosJourneyMystery.search and
+# then in noir.py there are rules saying both are needed before the next part
+# of the story can start, and then stuff in either file is gated on the plain
+# HerosJourny.search .
+
+
 from story import (
     Concept,
     ContentPack,
@@ -49,6 +66,7 @@ serious_tone = Concept(0, "seriousTone")
 # Resolution
 # - finding beauty in a mandala
 # - reverence of the pristine
+theme_of_money_conflict_between_siblings = Concept(0)
 
 # Cases
 caseOfMissingFather = Concept(1, "missingFather")
@@ -68,16 +86,20 @@ knows_is_creepy = Concept(2) # 1st knows 2nd is creepy
 knows_to_check_out_docks = Concept(1)
 must_call_for_alibi = Concept(2)
 is_attracted_to = Concept(2) # 1st is attracted to 2nd
+is_clients_father_brother = Concept(1)
 is_fathers_secretary = Concept(1)
 is_framed = Concept(1)
 is_in_satanic_cult = Concept(1)
 is_injured_in_hospital = Concept(1)
 lives_with = Concept(2, "livesWith")
+made_incorrect_public_accusation = Concept(1)
 run_off_together = Concept(2)
 stole_car = Concept(1)
+suggested_father_smuggled_drugs = Concept(0)
 thinks_father_wanted_to_leave_family = Concept(0)
 trusts = Concept(2) # 1st trusts 2nd
 wants_to_see_something_happen_tomorrow_morning = Concept(1)
+was_awkward_to_fathers_secretary = Concept(0)
 went_on_a_date_with = Concept(2)
 wore_a_blue_rose = Concept(1)
 writhed_on_the_ground = Concept(1)
@@ -85,7 +107,6 @@ writhed_on_the_ground = Concept(1)
 doesnt_take_client_seriously = Concept(0)
 # 1st parameter is the detective, 2nd is mentor
 hasGuidance = Concept(2, "hasGuidance")
-started_talking = Concept(2)
 told_to_go_smoke_weed = Concept(0)
 we_live_inside_a_dream = Concept(0)
 
@@ -117,13 +138,11 @@ wifeDiedRandomly = Concept(1, "wifeDiedRandomly")
 # Begin Character Arcs ==========================
 
 # Awkward arc:
-learned_to_appologize_and_recover_from_mistakes = Concept(1) # need
+learned_to_apologize_and_recover_from_mistakes = Concept(1) # need
 thinks_making_a_social_mistake_is_unforgivable = Concept(1) # lie
 wants_to_be_in_proximity_of_someone_they_fancy = Concept(1) # want
 saw_has_no_wedding_ring_on = Concept(2) # (+ is_attracted_to) lock-in
 made_a_huge_faux_pas = Concept(1) # lowest point
-#(TODO: example: he appologizes and offers to resign from case. But what's a
-# reason for him to stay on that doesn't seem cheap?
 sincerely_applogized = Concept(1) # sacrifice-action
 is_comfortable_around_those_attracted_to = Concept(1) # ultimate boon
 made_a_platonic_friend = Concept(1) # ultimate boon
@@ -198,7 +217,7 @@ can_truly_concentrate_on_the_case = Concept(1) #boon
 # made_a_true_friend - boon
 
 # Obsessive arc
-#TODO: need
+#TODO: #need
 #TODO: lie
 #TODO: want
 #TODO: lock-in
@@ -359,6 +378,21 @@ david = Object("david")
 julie = Object("julie")
 sarah = Object("sarah")
 
+#TODO: instead of this, add the ability to unset the concept value.
+# But long term should have the engine support a time concept. What we care
+# about is:
+#  1. Has something ever happend (can easily put any1 in the time param) or a
+#  a bound param that isn't used anywhere else.
+#  2. Has something happened before something else (this needs a special
+#  operator like are_different).
+#  3. Did two things happen simultaneously. (This needs a special operator too)
+#  (This is probably a rarer use case than the ordering one)
+#  4. To facilitate this we need a special object that creates a new 'moment'
+#  that is considered to be after every beat that came before. But we also want
+#  to establish that something happened in the past sometimes, which means we
+#  nned the ability to create a new moment but also establish that is before
+#  another moment. We could do that by letting the special happens_before op be
+#  used in the _sets_up part of the rule.
 nobody = Object("nobody")
 
 bar = Object("bar")
@@ -448,18 +482,8 @@ def has_no_gun(character):
 # solved, I don't believe that the detective will really refuse the case as if
 # so there would be no story.
 
-narrative_pieces = ([
-    # TODO: I really need a robust system of mutually exclusive concepts or just
-    # derived concepts. Like I don't want to establish a character as a PI if
-    # they already have a profession. Similarly I don't want to establish a new
-    # case if they already have a case. Currently we have the "hasACase" thing
-    # but it's silly to have to remember to establish that alongside the actual
-    # case concept every time. One alternative, is that parameters to concepts
-    # paired with "any" checks act like mutual exclusivity. So I could have
-    # professions become objects and also the cases become objects.
+narrative_pieces = [
     MakeBeat("Introduce PI in office")
-        # Need to establish protagonist before this phase is done
-        .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
         .ok_if(is_character(1))
         .express(actions.lean_back_in_chair, {"person": 1})
@@ -477,8 +501,9 @@ narrative_pieces = ([
         .sets_up(isProtag(1), isPI(1), now_at(1, pet_shop)),
 
     MakeBeat("Finds match book at crime scene")
+        .express(actions.find_matchbook_at_crime_scene, {"pi": 1})
         .ok_if(now_at(1, pet_shop))
-        .sets_up(scene_can_end),
+        .sets_up(HerosJourney.you, scene_can_end),
 
     #TODO: I don't want the PI to come here from unknown location if they just
     # left. How can we prevent that? Tracking most recent location somehow?
@@ -491,7 +516,7 @@ narrative_pieces = ([
         .if_not(now_at(any1, pi_office), isClient(any1))
         .if_not(talking_on_phone(1, any1), are_different(any1, nobody))
         .express(actions.twirl_phone_cord, {"person": 1})
-        .sets_up(talking_on_phone(1, 2), talking_to(1, 2)),
+        .sets_up(talking_on_phone(1, 2), talking_to(1, 2), HerosJourney.you),
 
     MakeBeat("PI is awkward, we learn from asking out on phone call")
         .ok_if(isPI(1), talking_on_phone(1, 2), are_different(2, nobody))
@@ -514,7 +539,8 @@ narrative_pieces = ([
         .sets_up(
             wasRejectedForDate(1),
             wants_to_be_in_proximity_of_someone_they_fancy(1),
-            talking_on_phone(1, nobody)
+            talking_on_phone(1, nobody),
+            HerosJourney.need
         ),
 
     MakeBeat("PI wants to fight waiter")
@@ -527,13 +553,11 @@ narrative_pieces = ([
     MakeBeat("PI is cocky")
         .ok_if(isPI(1), talking_on_phone(1,2), wantsToFightWaiter(1))
         .express(actions.be_cocky_on_phone, {"pi": 1, "date": 2})
-        .sets_up(isCocky(1)),
+        .sets_up(isCocky(1), HerosJourney.need),
 
     MakeBeat("Introduce Ramen shop owner")
         .express(descriptions.opened_shop_late_at_night, {"person": 1})
         .express(descriptions.served_late_night_customers, {"person": 1})
-        # Need to establish protagonist before this phase is done
-        .if_not(HerosJourney.you)
         .if_not(isProtag(any1))
         .sets_up(
             isProtag(1),
@@ -567,9 +591,25 @@ narrative_pieces = ([
         .ok_if(now_at(0, pi_office), isProtag(0))
         .sets_up(politicalScandal),
 
-    MakeBeat("Rejects empathy attempt from coworker")
-        .ok_if(isProtag(0), isPI(0), now_at(0, pi_office))
-        .ok_if(isProtag(0), isRamenShopOwner(0), now_at(0, ramen_shop))
+    MakeBeat("Rejects empathy attempt from coworker about dead brother")
+        .express(
+            actions.reject_empathy_attempt_about_brother,
+            {"rejecter": 0, "empathizer": 1}
+        )
+        .ok_if(
+            isProtag(0),
+            isPI(0),
+            hasDeadBrother(0),
+            now_at(0, pi_office),
+            is_character(1)
+        )
+        .ok_if(
+            isProtag(0),
+            isRamenShopOwner(0),
+            hasDeadBrother(0),
+            now_at(0, ramen_shop),
+            is_character(1)
+        )
         .if_not(ProtagonistDefinition.need)
         .if_not(talking_on_phone(0, any1))
         .sets_up(
@@ -584,18 +624,39 @@ narrative_pieces = ([
         .ok_if(isProtag(0), thinks_needs_to_protect_self_from_intimacy(0))
         .sets_up(hasDeadBrother(0), ProtagonistDefinition.ghost),
 
+    MakeBeat("Client walks in while PI is on the phone.")
+        .if_not(now_at(any1, pi_office), isClient(any1)) # for any other char
+        .if_not(hasACase(0))
+        .if_not(knows_is_creepy(1, 0))
+        .if_not(kickedOutClient(0, 1))
+        .ok_if(
+            isPI(0),
+            is_character(1),
+            now_at(0, pi_office),
+            talking_on_phone(0, 2),
+            are_different(0, 1)
+        )
+        .sets_up(now_at(1, pi_office), isClient(1)),
+
     MakeBeat("Client walks in")
         .express(actions.see_client_walk_in, {"pi": 0, "client": 1})
         .if_not(now_at(any1, pi_office), isClient(any1)) # for any other char
         .if_not(hasACase(0))
         .if_not(knows_is_creepy(1, 0))
         .if_not(kickedOutClient(0, 1))
+        .if_not(talking_on_phone(0, any2))
         .ok_if(isPI(0), now_at(0, pi_office), are_different(0, 1))
         .sets_up(now_at(1, pi_office), isClient(1)),
 
     MakeBeat("Hang up because see client")
         .express(actions.hang_up, {"person": 0})
-        .ok_if(now_at(1, pi_office), isClient(1), talking_on_phone(0, 1))
+        .ok_if(
+            now_at(1, pi_office),
+            isClient(1),
+            now_at(0, pi_office),
+            isPI(0),
+            talking_on_phone(0, 2)
+        )
         .sets_up(talking_on_phone(0, nobody)),
 
     MakeBeat("Regular's father is missing")
@@ -612,18 +673,21 @@ narrative_pieces = ([
             now_at(1, ramen_shop),
             is_regular(1),
             caseOfMissingFather(0),
-            HerosJourney.go,
             scene_can_end
         ),
 
     MakeBeat("Notices has no wedding ring on")
         .ok_if(isAwkward(1), now_at(1, 3), now_at(2, 3), are_different(1, 2))
-        .sets_up(saw_has_no_wedding_ring_on(1, 2), is_attracted_to(1, 2)),
+        .sets_up(
+            saw_has_no_wedding_ring_on(1, 2),
+            is_attracted_to(1, 2),
+            HerosJourney.need
+        ),
 
     MakeBeat("Closes shop and leaves.")
         .express(actions.close_ramen_shop, {"owner": 0})
         .ok_if(isRamenShopOwner(0), now_at(0, ramen_shop), scene_can_end)
-        .sets_up(now_at(0, the_streets)),
+        .sets_up(now_at(0, the_streets), HerosJourney.go),
 
     MakeBeat("PI tells client they love them. Client goes home. PI leaves")
         .ok_if(
@@ -719,7 +783,7 @@ narrative_pieces = ([
         )
         .if_not(hasACase(0))
         .express(actions.hear_client_father_is_missing, {"pi": 0, "client": 1})
-        .sets_up(caseOfMissingFather(0), HerosJourney.need),
+        .sets_up(caseOfMissingFather(0)),
 
     MakeBeat("Is very eager to take case")
         .ok_if(
@@ -729,7 +793,10 @@ narrative_pieces = ([
             now_at(1, pi_office),
             thinks_needs_to_protect_self_from_intimacy(0)
         )
-        .sets_up(wants_to_work_hard_to_distract_from_personal_life(0)),
+        .sets_up(
+            wants_to_work_hard_to_distract_from_personal_life(0),
+            HerosJourney.go
+        ),
 
     MakeBeat("Sister ran off case")
         .ok_if(
@@ -741,9 +808,9 @@ narrative_pieces = ([
         )
         .if_not(hasACase(0))
         .express(actions.hear_daughter_has_run_off, {"pi": 0, "client": 1})
-        .sets_up(hasACase(0), HerosJourney.need),
+        .sets_up(hasACase(0)),
 
-    MakeBeat("Meet client have met before")
+    MakeBeat("Ask if father left town")
         .ok_if(
             isPI(0),
             now_at(0, pi_office),
@@ -765,7 +832,7 @@ narrative_pieces = ([
             asked_how_was_your_father
         )
         .if_not(hasACase(0))
-        .sets_up(hasACase(0), HerosJourney.need),
+        .sets_up(hasACase(0)),
 
     MakeBeat(
         "Client gives PI a fake identity and has them eavesdrop on father at " +
@@ -806,6 +873,19 @@ narrative_pieces = ([
         )
         .express(actions.look_in_study, {"pi": 0, "client": 1})
         .sets_up(client_is_hiding_something),
+
+    MakeBeat("PI asks about south american maps on the wall. Client says her " +
+        "father liked to sail down to South America frequently. PI suggests he"+
+        " may have been drug smuggling. Client says he would never. PI asks to"+
+        " check out father's boat and client says to drop it.")
+        .ok_if(
+            isPI(0),
+            now_at(0, client_home),
+            isClient(1),
+            now_at(1, client_home),
+            caseOfMissingFather(0)
+        )
+        .sets_up(suggested_father_smuggled_drugs),
 
     # This seems like he wanted to leave his family but really he just wanted
     # to do the dishes.
@@ -878,6 +958,7 @@ narrative_pieces = ([
         .sets_up(dogCanFindKeys, found_keys, silly_tone, scene_can_end),
 
     MakeBeat("Someone robbed Protag")
+        .express(descriptions.someone_robbed_protag, {})
         .ok_if(isProtag(0), now_at(0, pi_home))
         .sets_up(protagGotRobbed),
 
@@ -887,10 +968,25 @@ narrative_pieces = ([
         .sets_up(made_a_huge_faux_pas(0)),
 
     MakeBeat("Makes incorrect accusation unnecessarily publicly and confidently")
-        .ok_if(isAwkward(0), HerosJourney.search)
-        .ok_if(isCocky(0), HerosJourney.search)
+        .ok_if(isAwkward(0), hasACase(0), HerosJourney.search)
+        .ok_if(isCocky(0), hasACase(0), HerosJourney.search)
         .if_not(talking_on_phone(0, any1))
-        .sets_up(made_a_huge_faux_pas(0), HerosJourney.find),
+        .sets_up(made_incorrect_public_accusation(0), HerosJourney.find),
+
+    MakeBeat("Appologizes to client for making incorrect accusation. Offers " +
+        "to resign from case. Client accepts apology and says that she found "+
+        "some boxes that came in on his ship in the garage. It was odd that " +
+        "they were at the house so she looked through them and found " +
+        "matroishka dolls stuffed with bags of white powder. So Client keeps "+
+        "PI on because he does have good instincts.")
+        .ok_if(
+            made_incorrect_public_accusation(0),
+            suggested_father_smuggled_drugs
+        )
+        .sets_up(
+            sincerely_applogized(0),
+            learned_to_apologize_and_recover_from_mistakes(0)
+        ),
 
     MakeBeat("PI slept and dreamed of heroin.")
         .if_not(ProtagonistDefinition.ghost)
@@ -898,7 +994,8 @@ narrative_pieces = ([
         .sets_up(isFormerOpiumAdict(0), ProtagonistDefinition.ghost),
 
     MakeBeat("Finds match book from burglars")
-        .ok_if(protagGotRobbed)
+        .express(actions.find_matchbook_from_burglars, {"protag": 0})
+        .ok_if(protagGotRobbed, isProtag(0))
         .sets_up(burglarsHungOutAtBar()),
 
     MakeBeat("Has big conspiracy board with yarn and stuff")
@@ -938,7 +1035,7 @@ narrative_pieces = ([
         )
         .if_not(isClient(2))
         .if_not(hasGuidance(1, any1))
-        .sets_up(started_talking(1, 2), is_old_boss(2), scene_cannot_end),
+        .sets_up(talking_to(1, 2), is_old_boss(2), scene_cannot_end),
 
     MakeBeat("Old boss suggests smoking weed to think about case with a "
         + "broadened perspective")
@@ -986,14 +1083,14 @@ narrative_pieces = ([
     MakeBeat("Finds father dead.")
         .if_not(silly_tone)
         .ok_if(inFathersAppartment(1))
-        .sets_up(serious_tone, foundDeadFather(1), HerosJourney.go),
+        .sets_up(serious_tone, foundDeadFather(1)),
 
     MakeBeat("Finds match book on father's body.")
-        .ok_if(foundDeadFather(0), HerosJourney.go)
+        .ok_if(foundDeadFather(0))
         .sets_up(fatherHungOutAtBar()),
 
     MakeBeat("Finds paper with non-sensical phrases.")
-        .ok_if(foundDeadFather(0), HerosJourney.go)
+        .ok_if(foundDeadFather(0))
         .sets_up(heardCodedWords),
 
     #TODO: erg what should we do if the protag has been to the bar before cause
@@ -1012,7 +1109,7 @@ narrative_pieces = ([
         .ok_if(fatherHungOutAtBar(), isProtag(0), is_character(1))
         .ok_if(burglarsHungOutAtBar(), isProtag(0), is_character(1))
         .if_not(now_at(0, bar))
-        .if_not(HerosJourney.find)
+        .if_not(HerosJourney.search)
         .sets_up(now_at(0, bar)),
 
     #TODO: if isAwkward(1) scene where someone is talking about a standoff with
@@ -1131,12 +1228,19 @@ narrative_pieces = ([
         ),
 
     MakeBeat("Leaves seedy bar.")
+        .if_not(bar_burned_down)
         .ok_if(HerosJourney.search, now_at(0, bar))
         .sets_up(now_at(0, the_streets)),
+
+    MakeBeat("Calls father's business. Tries to asks questions but is awkward.")
+        .if_not(fathers_secretary_left_on_vacation)
+        .ok_if(caseOfMissingFather(1), isAwkward(1))
+        .sets_up(was_awkward_to_fathers_secretary),
 
     MakeBeat("Calls father's business. Asks questions. Finds out father's " +
         "secretary started a month long vacation 1 week before father " +
         "disappeared.")
+        .if_not(was_awkward_to_fathers_secretary)
         .ok_if(told_to_focus_on_where_people_are, caseOfMissingFather(1))
         .sets_up(fathers_secretary_left_on_vacation),
 
@@ -1169,7 +1273,7 @@ narrative_pieces = ([
         .sets_up(bar_burned_down, now_at(1, bar)),
 
     MakeBeat(
-        "PI asks bar neighbor why it burned down. Gets hint to go to docks."
+        "Asks bar neighbor why it burned down. Gets hint to go to docks."
     )
         .express(
             actions.ask_why_bar_burned_down,
@@ -1177,7 +1281,7 @@ narrative_pieces = ([
             unnamed={"bystander": nouns.neighbor}
         )
         .express(descriptions.knows_fish_company_by_docks, {"pi": 1})
-        .ok_if(isPI(1), bar_burned_down, is_character(2))
+        .ok_if(isProtag(1), bar_burned_down, is_character(2), now_at(1, bar))
         .sets_up(HerosJourney.find, knows_to_check_out_docks(1)),
 
     # TODO: follow up with watching them perform a ritual that fails.
@@ -1222,10 +1326,31 @@ narrative_pieces = ([
             writhed_on_the_ground(0)
         ),
 
-    # TODO: need to expand on this
-    MakeBeat("Finds evidence his old boss did it.")
-        .ok_if(foundMotive, hasGuidance(1,2))
-        .sets_up(foundEvidenceOfPerp(1,2), isPerp(2), HerosJourney.take),
+    MakeBeat("""If PI has a dead brother, establish that PI and brother shared
+            everything and helped each other out when they were poor. Just
+            before he died they had an argument where brother accused PI of
+            drifting away because he had made some money and new friends. PI
+            always regretted not saying the right thing in that moment.""")
+        .ok_if(hasDeadBrother(0), isPI(0))
+        .sets_up(theme_of_money_conflict_between_siblings),
+
+    MakeBeat("""Client's father has an older estranged brother who PI goes and
+            speaks to even though client says not to. Father's older brother
+            tells PI stories about client's father that give PI leads to
+            investigate stuff.""")
+        .if_not(is_clients_father_brother(any1))
+        .ok_if(is_character(1))
+        .sets_up(
+            is_clients_father_brother(1),
+            theme_of_money_conflict_between_siblings
+        ),
+
+    MakeBeat("""At the end turns out client's father's older brother who is poor
+            killed the father because he never shared his wealth and older
+            brother thought he was owed it for raising client's father (as their
+            parents had died""")
+        .ok_if(is_clients_father_brother(1), HerosJourney.find)
+        .sets_up(foundMotive, isPerp(1)),
 
     MakeBeat("""Old boss did it because victim was going to screw the town over
             by forging documents saying that he owned some desert land that was
@@ -1273,13 +1398,19 @@ narrative_pieces = ([
         .ok_if(isCocky(1), learned_to_enjoy_empathy(1))
         .sets_up(foundEvidenceOfPerp(1,2), HerosJourney.take),
 
-    MakeBeat("""Was able to call someone up where their conversation earlier in
-        the story was super awkward and the PI can apologize and play it off
-        like they were super tired or upset that day and then afterwards the
-        person accepts their apology and demonstration of not being so awkward
-        and helps the PI out with some info.""")
-        .ok_if(isAwkward(1), learned_to_appologize_and_recover_from_mistakes(1))
-        .sets_up(foundEvidenceOfPerp(1,2), HerosJourney.take),
+    MakeBeat("""Was able to call secretary up where their conversation earlier
+        in the story was super awkward. PI apologizes and plays it off like
+        they were super tired or upset that day and then the secretary accepts
+        their apology and demonstration of not being so awkward and helps the
+        PI out by saying that the father met with PI's mentor the day he
+        disappeared.""")
+        .ok_if(
+            learned_to_apologize_and_recover_from_mistakes(1),
+            was_awkward_to_fathers_secretary,
+            hasGuidance(1, 2)
+        )
+        .if_not(foundEvidenceOfPerp(1, any1))
+        .sets_up(foundEvidenceOfPerp(1, 2), isPerp(2), HerosJourney.take),
 
     MakeBeat("Goes to perps place.")
         .ok_if(foundEvidenceOfPerp(1,2), HerosJourney.take)
@@ -1432,14 +1563,46 @@ narrative_pieces = ([
 
     MakeBeat("Takes a risk and asks romantic interest to leave town with him")
         .ok_if(is_gambler(1), isProtag(1))
-        .sets_up(run_off_together(1,2))
-])
+        .sets_up(run_off_together(1,2)),
+
+    MakeBeat("PI and client become friends")
+        .ok_if(
+            learned_to_apologize_and_recover_from_mistakes(1),
+            HerosJourney.theReturn
+        )
+        .sets_up(made_a_platonic_friend(1), HerosJourney.change),
+
+    MakeBeat("Finally listed to beautiful lyricsa at karaok")
+        .ok_if(
+            learned_to_see_how_the_cycle_life_and_death_shapes_the_world(1),
+            HerosJourney.theReturn
+        )
+        .sets_up(
+            finally_heard_the_lyrics_of_fleeting_love_in_karaoke_song(1),
+            HerosJourney.change
+        ),
+
+    MakeBeat("Spiraled into alchoholism")
+        .ok_if(
+            learned_that_there_are_no_absolutes(1),
+            HerosJourney.theReturn
+        )
+        .sets_up(spiraled_into_alchoholism(1), HerosJourney.change),
+
+    MakeBeat("Goes to live on a farm")
+        .ok_if(isObsessive(1), HerosJourney.theReturn)
+        .sets_up(quit_being_pi_for_simple_life(1), HerosJourney.change),
+]
 
 logic_rules = [
     MakeLogic("Any case means has a case.")
         .ok_if(caseOfMissingFather(0))
         .ok_if(father_being_shady_case, isPI(0))
-        .sets_up(hasACase(0))
+        .sets_up(hasACase(0)),
+
+    MakeLogic("Made a faux pas.")
+        .ok_if(made_incorrect_public_accusation(0))
+        .sets_up(made_a_huge_faux_pas(0)),
 ]
 
 # A theory for cycles in the story:

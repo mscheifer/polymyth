@@ -15,8 +15,8 @@ import re
 #   o - object
 #   p - posessive
 #   v - vocative
-#   fv - formal vocative
-#   uv - unknown vocative (when the character's name is unknown to the speaker)
+#   f - formal vocative
+#   u - unknown vocative (when the character's name is unknown to the speaker)
 
 @enum.unique
 class Case(enum.Enum):
@@ -25,7 +25,7 @@ class Case(enum.Enum):
     POSESSIVE = 'possessive'
     VOCATIVE = 'vocative'
     FORMAL_VOCATIVE = 'formal-vocative'
-    UNKOWN_VOCATIVE = 'unknown-vocative'
+    UNKNOWN_VOCATIVE = 'unknown-vocative'
 
 ParameterChunk = namedtuple('ParameterChunk', 'case parameter')
 
@@ -59,9 +59,9 @@ def parse(formatted_text):
                 case = Case.POSESSIVE
             elif part_of_speach == "v":
                 case = Case.VOCATIVE
-            elif part_of_speach == "fv":
+            elif part_of_speach == "f":
                 case = Case.FORMAL_VOCATIVE
-            elif part_of_speach == "uv":
+            elif part_of_speach == "u":
                 case = Case.UNKNOWN_VOCATIVE
             else:
                 assert False, (

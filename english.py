@@ -199,6 +199,21 @@ actions_text = {
         Quote("pi", "Um... Yes?"),
         Quote("doorman", "Alright come on in."),
     ],
+    actions.find_matchbook_at_crime_scene: [
+        "%pi:s noticed a matchbook on top of a smashed cage.",
+        "%pi:s reached down and used a pen to pick it up.",
+        ("%pi:s placed the matchbook in a plastic bag and put it in his coat " +
+            "pocket."),
+    ],
+    actions.find_matchbook_from_burglars: (
+        "%protag:s also found a matchbook amidst the clutter that he did not "+
+        "recognize."
+    ),
+    actions.find_wedding_ring_and_watch_on_counter: [
+        "%pi:s noticed a wedding band and gold watch on the kitchen counter.",
+        ("If you were kidnapped why would you take off your wedding ring " +
+        "first? He thought.")
+    ],
     actions.follow_father_inside_then_meet_mysterious_woman: [
         "The place was almost empty.",
         ("%pi:s took a quick peak in each booth, " +
@@ -229,11 +244,6 @@ actions_text = {
         Quote("ml", "Nothing has happened all night but this is..."),
         Quote("ml", "Well this is something at least."),
     ],
-    actions.find_wedding_ring_and_watch_on_counter: [
-        "%pi:s noticed a wedding band and gold watch on the kitchen counter.",
-        ("If you were kidnapped why would you take off your wedding ring " +
-        "first? He thought.")
-    ],
     actions.get_rejected: [
         Quote("date", "Oh, your going to go help your mom out? That's so " +
         "nice... Well... I don't think I want to see you again. You seemed " +
@@ -243,7 +253,7 @@ actions_text = {
         Quote("date", "Anyway, I've got to go. Have a nice weekend."),
         "%pi:s put the receiver down and sat up.",
     ],
-    actions.go_home: "%person:s goes home.",
+    actions.go_home: "%person:s went home.",
     actions.hang_up: [
         Quote("person", "I gotta go actually, goodbye."),
         "%person:s hung up the phone.",
@@ -309,6 +319,16 @@ actions_text = {
     actions.open_paper: "%person:s cracked open the afternoon Chronicle.",
     actions.read_political_scandal_in_paper:
         "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL.",
+    actions.reject_empathy_attempt_about_brother: [
+        "%rejecter:s stopped, looking at a photo on the wall.",
+        Quote("empathizer", "Are you thinking about your brother?"),
+        Quote("empathizer", "I wish he could have seen what you've done with " +
+            "the place."),
+        Quote("empathizer", "He would be proud."),
+        Quote("rejecter", "Let's get back to work."),
+        "%empathizer:s averted %empathizer:p eyes.",
+        "%empathizer:s hesitated a moment and then turned and walked away.",
+    ],
     actions.roll_eyes: "%person:s rolled their eyes.",
     actions.say_distrust_moderate_drinkers: [
         Quote("person", "I like a man who doesn't say when."),
@@ -354,8 +374,8 @@ actions_text = {
         ("%pi:s had been drumming %pi:p fingers and staring at the wall when " +
         "%pi:s heard a knock on the door."),
         Quote("pi", "Come on in."),
-        Quote("client", "Good evening %pi:fv. May I have a seat?"),
-        Quote("pi", "Please, %client:uv"),
+        Quote("client", "Good evening %pi:f. May I have a seat?"),
+        Quote("pi", "Please, %client:u"),
         "%pi:s stuck out %pi:p hand.",
     ],
     actions.see_regular_walk_in: [
@@ -468,6 +488,12 @@ descriptions_text = {
     ],
     descriptions.served_late_night_customers:
         "%person:s served taxi drivers, bar tenders and graveyard shift workers.",
+    descriptions.someone_robbed_protag: [
+        "There was broken glass on the floor.",
+        "Dresser drawers were on the ground and clothes were strewn about.",
+        ("After cleaning up for an hour, the only thing missing seemed to be " +
+        "two hundered dollars that had been hidden in a sock."),
+    ],
 }
 
 nouns_text = {
@@ -480,6 +506,7 @@ nouns_text = {
         "out to dinner",
         "on a date",
     ),
+    nouns.patrolman: "patrolman",
     nouns.television: "television set",
 }
 
@@ -617,8 +644,12 @@ class ProseState:
                     text = cased_word.possessive_case
                 elif chunk.case is prose.Case.VOCATIVE:
                     text = cased_word.vocative_case
+                elif chunk.case is prose.Case.FORMAL_VOCATIVE:
+                    text = cased_word.formal_vocative_case
+                elif chunk.case is prose.Case.UNKNOWN_VOCATIVE:
+                    text = cased_word.unknown_vocative_case
                 else:
-                    assert False, "UNKOWN CASE " + case
+                    assert False, "UNKOWN CASE " + chunk.case
             else:
                 text = chunk
             sentence += text
@@ -711,3 +742,18 @@ looked like she was changing into a different person."""
 so carried away in the dark but then everything seems sensible and ordinary
 again in the sun. Let's just have day from now on and do away with the
 nights."""
+
+"""
+"You know what the most common trope in fiction is? It's that the protagonist
+has a prupose, a true and deep purpose, something that is so important to do
+that it is worth risking their life, a task where life would not be worth
+living if they did not complete it.
+"Often this purpse is to save others lives. But why is it important to sacrifice
+your life to save the lives of others? So they can then go on to sacrifice their
+own lives for another set of people?
+"The truth is that most of us live comfortably. We don't have a purpose. The
+only reason to save us is so we can keep lounging around. But people have a hard
+time accepting that, so fiction tries to sell us that there can be a purpose.
+That we can find something objectively worth doing, and shirk responsability for
+creating meaning ourselves in this arbitrary world.
+"""
