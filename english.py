@@ -52,6 +52,8 @@ actions_text = {
         Quote("pi", "Alright, since you asked so nicely."),
         "%ml:s went and sat down at a booth.",
     ],
+    actions.ask_after:
+        Quote("person", "How is %conversation_partner_relative:o?"),
     actions.ask_how_are_you:
         Quote("person", "How are you?"),
     actions.ask_if_want: (
@@ -264,7 +266,7 @@ actions_text = {
         " one, lighting it with a match."),
         Quote("client", "He may be in trouble."),
         Quote("pi", "What kind of trouble?"),
-        Quote("client", "I don't know. He hasn't been seen in 3 days."),
+        Quote("client", "I don't know."),
     ],
     actions.hear_daughter_has_run_off: [
         Quote("client", "He's alright."),
@@ -291,6 +293,11 @@ actions_text = {
         Quote("regular", "Thanks, anyway"),
         "%regular:s turned and left.",
     ],
+    actions.invite_client_in: [
+        ("%pi:s had been drumming %pi:p fingers and staring at the wall when " +
+        "%pi:s heard a knock on the door."),
+        Quote("pi", "Come on in."),
+    ],
     actions.join_mysterious_woman: [
         "%pi:s left the bar and took a seat across from the woman",
         # Yeah I usually hang out here and hold court.
@@ -316,6 +323,12 @@ actions_text = {
         Quote("client", "I realized I forgot to shut a window in the other " +
             "room. That's all."),
     ],
+    actions.meet_pi: [
+        Quote("client", "Good evening %pi:f. May I have a seat?"),
+        Quote("pi", "Please, %client:u"),
+        "%pi:s stuck out %pi:p hand.",
+        Quote("client", "Goodhall"),
+    ],
     actions.open_paper: "%person:s cracked open the afternoon Chronicle.",
     actions.read_political_scandal_in_paper:
         "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL.",
@@ -335,11 +348,15 @@ actions_text = {
         Quote("person", "If he's careful not to drink too much then it means " +
             "he's not to be trusted when he does drink"),
     ],
+    actions.say_father_is_missing_for_3_days:
+        Quote("client", "He hasn't been seen in 3 days."),
     actions.say_met_client_and_father_once_and_admire_father: [
-        Quote("client", "Goodhall, but we have been aquainted before. You " +
-        "came to my Father's 60th birthday party 4 years back."),
-        Quote("pi", "Ahh... yes of course. Your father was a great man from " +
-        "all the stories I had heard and I was glad to meet him. How is he?"),
+        Quote("client", "But we have been aquainted before."
+        Quote("client",
+            "You came to my Father's 60th birthday party 4 years back."),
+        Quote("pi", "Ahh... yes of course."),
+        Quote("pi", "Your father was a great man from all the stories I had " +
+            "heard and I was glad to meet him."),
     ],
     actions.say_needs_to_help_mom:
          Quote("person", "I gotta stop by my mom's place at some " +
@@ -369,14 +386,6 @@ actions_text = {
         Quote("person", "No, you're cheersing wrong. Peoplw who are pregnant," +
             " that's ok. If you don't have a legitamite excuse you should be " +
             "drinking"),
-    ],
-    actions.see_client_walk_in: [
-        ("%pi:s had been drumming %pi:p fingers and staring at the wall when " +
-        "%pi:s heard a knock on the door."),
-        Quote("pi", "Come on in."),
-        Quote("client", "Good evening %pi:f. May I have a seat?"),
-        Quote("pi", "Please, %client:u"),
-        "%pi:s stuck out %pi:p hand.",
     ],
     actions.see_regular_walk_in: [
         ("%owner:s had been drumming %owner:p fingers and staring at the wall "
@@ -454,6 +463,8 @@ actions_text = {
         "asking his guest. 'Have you ever ghosted anyone?' 'Well I ghosted my" +
         " guitar teacher.' Canned laughter."),
     actions.writhe_on_ground: "%person:s collapsed and writhed on the ground.",
+
+    actions.transition_scene: "\n\t* * *"
 }
 
 descriptions_text = {
