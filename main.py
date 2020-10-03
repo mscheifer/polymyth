@@ -21,7 +21,9 @@ if __name__ == '__main__':
 
     is_debug = args.debug
 
-    state = story_state.StoryState([beats.noir.content_pack])
+    content = beats.noir.content_pack
+
+    state = story_state.StoryState([content])
     prose_state = english.ProseState()
 
     stillTelling = True
@@ -32,7 +34,7 @@ if __name__ == '__main__':
         
         #TODO: move this logic into story state, or put content pack logic
         #separated somewhere else but this should be with that.
-        pieces = beats.noir.narrative_pieces.copy()
+        pieces = content.possible_beats.copy()
         random.shuffle(pieces)
         for piece in pieces:
 

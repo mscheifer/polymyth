@@ -102,6 +102,15 @@ class MakeLogic(MakeRule):
             self.prohibitive_concept_tuples
         )
 
+class MakeAntiLogic(MakeRule):
+    def cant_set_up(self, *concepts):
+        return AntiLogic(
+            self.debug_text,
+            self.required_concept_tuples,
+            concepts,
+            self.prohibitive_concept_tuples
+        )
+
 class Rule:
     def __init__(
         self,
@@ -187,6 +196,9 @@ class NarrativePiece(Rule):
 class Logic(Rule):
     pass
 
+class AntiLogic(Rule):
+    pass
+
 class Concept:
     # In the common case, num_value_parameters is 0, so there is only 1 possible
     # value for the "key", which means it's just a normal concept established
@@ -269,6 +281,12 @@ ContentPack = collections.namedtuple(
         # steps that readers should make automatically and they would be
         # confused if the story did not also.
         'logic_rules',
+        # Anti-logic rules prevent concepts from being established by either
+        # beats or logic rules. They may match their requirements for only part
+        # of the story, and then later their requirements will no longer be
+        # fullfilled and the concept the rule was preventing is now allowed to
+        # be established.
+        'anti_logic_rules',
         'object_expressions'
     ])
 )

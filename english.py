@@ -88,6 +88,7 @@ actions_text = {
         Quote("client", "I read your sign on the door."),
         "%client:s turned and left. %pi:s followed.",
     ],
+    actions.ask_if_father_left_town: Quote("asker", "Hey %askee:v, do I talk a lot?"),
     actions.ask_to_recount_forgotten_childhood: Quote("person", "Wait, tell " +
         "me about our old friends, after school, running in the park. We " +
         "thought we saw something magical in the woods. I have forgotten " +
@@ -139,24 +140,24 @@ actions_text = {
     actions.avoid_interaction_with_mother: [
         #TODO: there shouldn't be a diaglog tag here even if this is the first
         # line for the mother, because we figure out who it is from the next line.
-        Quote("mother", "Is that you, %pi:v?"),
+        Quote("mother", "Is that you, %person:v?"),
         "He closed then latched the door behind him.",
         "He turned to put his hat on the hook.",
-        Quote("pi", "Hey Ma", tag="replied"),
-        Quote("mother", "%pi:v can you come over here"),
+        Quote("person", "Hey Ma", tag="replied"),
+        Quote("mother", "%person:v can you come over here"),
         "%mother:p voice was feeble.", # TODO: way to have this grouped with previous line?
-        Quote("pi", "I'm working on a case, Ma. I'll talk to you later"),
-        Quote("mother", "%pi:v wait..."), #TODO: use diminuitive name like "jakey" for "jake"
+        Quote("person", "I'm working on a case, Ma. I'll talk to you later"),
+        Quote("mother", "%person:v wait..."), #TODO: use diminuitive name like "jakey" for "jake"
         ("He had shut the door to his bedroom and did not hear the end of the " +
             "sentence."),
     ],
     actions.be_cocky_on_phone: [
         #TODO: diminutive genered noun here instead of always 'girl'
-        Quote("pi", "You're real funny, girl. Why don't I come pick you up at" +
+        Quote("person", "You're real funny, girl. Why don't I come pick you up at" +
         " 7:00."),
         Quote("date", "How about this. Don't call me again until you've found" +
         " some decency."),
-        Quote("pi", "Wait what? %date:v?... Hello?"),
+        Quote("person", "Wait what? %date:v?... Hello?"),
         "%:pi:n put the receiver down and twirled his thumbs.",
     ],
     actions.close_ramen_shop: [
@@ -250,7 +251,7 @@ actions_text = {
         Quote("date", "Oh, your going to go help your mom out? That's so " +
         "nice... Well... I don't think I want to see you again. You seemed " +
         "very quiet and uncomfortable around me."),
-        Quote("pi", "Wait now, that was just the first date. I was trying to " +
+        Quote("person", "Wait now, that was just the first date. I was trying to " +
         "be respectful. I can be more... I wasn't uncomfortable."),
         Quote("date", "Anyway, I've got to go. Have a nice weekend."),
         "%pi:s put the receiver down and sat up.",
@@ -260,7 +261,7 @@ actions_text = {
         Quote("person", "I gotta go actually, goodbye."),
         "%person:s hung up the phone.",
     ],
-    actions.hear_client_father_is_missing: [
+    actions.hear_client_father_is_in_trouble: [
         Quote("client", "That's just the thing,"),
         ("%client:s took a cigarette holder from %client:p purse and withdrew" +
         " one, lighting it with a match."),
@@ -293,7 +294,7 @@ actions_text = {
         Quote("regular", "Thanks, anyway"),
         "%regular:s turned and left.",
     ],
-    actions.invite_client_in: [
+    actions.invite_in_to_office: [
         ("%pi:s had been drumming %pi:p fingers and staring at the wall when " +
         "%pi:s heard a knock on the door."),
         Quote("pi", "Come on in."),
@@ -330,6 +331,20 @@ actions_text = {
         Quote("client", "Goodhall"),
     ],
     actions.open_paper: "%person:s cracked open the afternoon Chronicle.",
+    actions.pretend_wasnt_trying_to_fool: [
+        "%con:s laughed.",
+        Quote(
+            "con",
+            "Of course it's not true, but these people wouldn't understand."
+        ),
+        Quote("con", "There's something big going on here."),
+        Quote("con", "It would be a serious disaster if some fool blurted " +
+            "everything to the public."),
+        Quote("con", "You know what I'm talking about, of course."),
+        Quote("fool", "Well, no"),
+        Quote("fool", "I don't"),
+        "%con:s smirked.",
+    ],
     actions.read_political_scandal_in_paper:
         "In big bold letters it read: SENATOR WYDEN'S CORRUPT LAND DEAL.",
     actions.reject_empathy_attempt_about_brother: [
@@ -343,6 +358,11 @@ actions_text = {
         "%empathizer:s hesitated a moment and then turned and walked away.",
     ],
     actions.roll_eyes: "%person:s rolled their eyes.",
+    actions.say_altering_the_deal: [
+        Quote("person", "That's not the deal any more."),
+        Quote("person", "I'm changing the deal."),
+        Quote("person", "Best bet I don't change it again."),
+    ],
     actions.say_distrust_moderate_drinkers: [
         Quote("person", "I like a man who doesn't say when."),
         Quote("person", "If he's careful not to drink too much then it means " +
@@ -351,7 +371,7 @@ actions_text = {
     actions.say_father_is_missing_for_3_days:
         Quote("client", "He hasn't been seen in 3 days."),
     actions.say_met_client_and_father_once_and_admire_father: [
-        Quote("client", "But we have been aquainted before."
+        Quote("client", "But we have been aquainted before."),
         Quote("client",
             "You came to my Father's 60th birthday party 4 years back."),
         Quote("pi", "Ahh... yes of course."),
@@ -361,6 +381,7 @@ actions_text = {
     actions.say_needs_to_help_mom:
          Quote("person", "I gotta stop by my mom's place at some " +
         "point to help her move a bookcase. But that's about it."),
+    actions.say_no_you_dont: Quote("speaker", "No you don't"),
     actions.say_oh_not_much:
         Quote("person", "Oh not much. Just some spring cleaning. You?"),
     actions.say_saw_pi_in_a_dream: [
@@ -379,6 +400,7 @@ actions_text = {
     ],
     actions.say_they_are_happy_just_being_alive_cooly:
         Quote("person", "I'm alive, which is pretty engaging"),
+    actions.say_yeah_you_do: Quote("speaker", "Yeah, you do"),
     actions.say_you_can_talk_to_me_about_anything: [
         Quote("person", "You know you can talk to me about anything"),
     ],
@@ -387,6 +409,7 @@ actions_text = {
             " that's ok. If you don't have a legitamite excuse you should be " +
             "drinking"),
     ],
+    actions.say_you_talk_a_lot: Quote("person", "You know, you talk a lot."),
     actions.see_regular_walk_in: [
         ("%owner:s had been drumming %owner:p fingers and staring at the wall "
         + "when %owner:s heard a customer walk in."),
@@ -403,9 +426,9 @@ actions_text = {
     actions.talk_about_fight_waiter: [
         Quote("date", "Are you going to pick a fight with the waiter again? " +
         "I'msurprised you think they'll let you back in the place."),
-        Quote("pi", "I think he and I came to an understanding. Even if not, " +
-        "wouldn't you want to watch me give him a good one, huh? Right in the" +
-        " kisser."),
+        Quote("person", "I think he and I came to an understanding. Even if " +
+        "not, wouldn't you want to watch me give him a good one, huh? Right " +
+        "in the kisser."),
         Quote("date", "Wow, you're well fixed on this guy. Maybe I should " +
         "give you space to get to know him."),
     ],
